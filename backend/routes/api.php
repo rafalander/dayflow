@@ -9,6 +9,7 @@ use App\Http\Controllers\ReportController;
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\SettingController;
 use App\Http\Controllers\CargoController;
+use App\Http\Controllers\TeamController;
 
 // Public routes
 Route::post('/auth/dev-login', [AuthController::class, 'devLogin'])->name('auth.dev-login');
@@ -47,6 +48,10 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // Cargos — perfis de cargo vinculados a uma role (Admin only)
     Route::apiResource('cargos', CargoController::class)->only(['index', 'store', 'update', 'destroy']);
+
+    // Times (equipes / hierarquia sob gestor)
+    Route::apiResource('teams', TeamController::class)->only(['index', 'store', 'show', 'update', 'destroy']);
+    Route::put('teams/{team}/members', [TeamController::class, 'syncMembers']);
 
     // Settings (Admin only)
     Route::get('settings', [SettingController::class, 'index']);

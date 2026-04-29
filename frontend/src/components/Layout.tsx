@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 import { Outlet, useNavigate, useLocation } from 'react-router-dom'
-import { Menu, X, LogOut, Calendar, CheckCircle, BarChart3, Users, Briefcase } from 'lucide-react'
+import { Menu, X, LogOut, Calendar, CheckCircle, BarChart3, Users, Briefcase, Network } from 'lucide-react'
 import UserAvatar from '@/components/UserAvatar'
 import { useAuthStore } from '@/store/authStore'
 import { useAuth } from '@/hooks'
@@ -30,7 +30,7 @@ export default function Layout() {
   const user = meQuery.data
 
   const menuItems = useMemo(() => {
-    const base: { label: string; path: string; icon: typeof BarChart3 }[] = [
+    const base: { label: string; path: string; icon: typeof BarChart3; matchPrefix?: string }[] = [
       { label: 'Dashboard', path: '/dashboard', icon: BarChart3 },
       { label: 'Férias', path: '/vacations', icon: Calendar },
       { label: 'Aprovações', path: '/approvals', icon: CheckCircle },
@@ -40,6 +40,7 @@ export default function Layout() {
       base.push(
         { label: 'Usuários', path: '/users', icon: Users },
         { label: 'Cargos', path: '/cargos', icon: Briefcase },
+        { label: 'Times', path: '/teams', icon: Network, matchPrefix: '/teams' },
       )
     }
     return base
@@ -55,7 +56,12 @@ export default function Layout() {
     }
   }
 
-  const isActive = (path: string) => location.pathname === path
+  const isActive = (path: string, matchPrefix?: string) => {
+    if (matchPrefix) {
+      return location.pathname === path || location.pathname.startsWith(`${matchPrefix}/`)
+    }
+    return location.pathname === path
+  }
 
   return (
     <div className="flex h-screen bg-gray-50">
@@ -97,7 +103,7 @@ export default function Layout() {
                 type="button"
                 onClick={() => navigate(item.path)}
                 className={`flex w-full items-center space-x-3 rounded px-4 py-2 transition ${
-                  isActive(item.path)
+                  isActive(item.path, item.matchPrefix)
                     ? 'bg-primary text-white'
                     : 'text-gray-600 hover:bg-gray-100'
                 }`}

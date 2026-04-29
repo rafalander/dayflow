@@ -9,9 +9,11 @@ use Illuminate\Support\ServiceProvider;
 use App\Models\VacationRequest;
 use App\Models\User;
 use App\Models\Cargo;
+use App\Models\Team;
 use App\Policies\VacationRequestPolicy;
 use App\Policies\UserPolicy;
 use App\Policies\CargoPolicy;
+use App\Policies\TeamPolicy;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -34,6 +36,7 @@ class AppServiceProvider extends ServiceProvider
         Gate::policy(VacationRequest::class, VacationRequestPolicy::class);
         Gate::policy(User::class, UserPolicy::class);
         Gate::policy(Cargo::class, CargoPolicy::class);
+        Gate::policy(Team::class, TeamPolicy::class);
 
         // Configure Sanctum
         if (class_exists(\Laravel\Sanctum\Sanctum::class)) {

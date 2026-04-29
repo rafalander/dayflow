@@ -1,5 +1,15 @@
 import api from './api'
-import { User, UserRole, ApiResponse, LaravelPaginator, VacationRequest, Role, Cargo } from '@/types'
+import {
+  User,
+  UserRole,
+  ApiResponse,
+  LaravelPaginator,
+  VacationRequest,
+  Role,
+  Cargo,
+  Team,
+  TeamDetailPayload,
+} from '@/types'
 
 export const authService = {
   getMe: async (): Promise<User> => {
@@ -109,6 +119,40 @@ export const cargoService = {
 
   delete: async (id: number) => {
     await api.delete(`/cargos/${id}`)
+  },
+}
+
+export const teamService = {
+  getAll: async (): Promise<Team[]> => {
+    const response = await api.get<{ data: Team[]; status: string }>('/teams')
+    return response.data.data
+  },
+
+  getById: async (id: number): Promise<TeamDetailPayload> => {
+    const response = await api.get<ApiResponse<TeamDetailPayload>>(`/teams/${id}`)
+    return response.data.data
+  },
+
+  create: async (data: { name: string; description?: string | null; color?: string; lead_id: number }) => {
+    const response = await api.post<ApiResponse<Team>>(`/teams`, data)
+    return response.data.data as Team
+  },
+
+  update: async (
+    id: number,
+    data: Partial<{ name: string; description: string | null; color: string }>,
+  ) => {
+    const response = await api.put<ApiResponse<Team>>(`/teams/${id}`, data)
+    return response.data.data as Team
+  },
+
+  delete: async (id: number) => {
+    await api.delete(`/teams/${id}`)
+  },
+
+  syncMembers: async (id: number, user_ids: number[]): Promise<TeamDetailPayload> => {
+    const response = await api.put<ApiResponse<TeamDetailPayload>>(`/teams/${id}/members`, { user_ids })
+    return response.data.data
   },
 }
 

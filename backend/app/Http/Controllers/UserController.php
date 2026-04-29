@@ -212,6 +212,8 @@ class UserController extends Controller
 
     public function organizationTree(): JsonResponse
     {
+        $this->authorize('viewAny', User::class);
+
         $rootUsers = User::whereNull('manager_id')
             ->with('subordinates')
             ->get();

@@ -11,6 +11,37 @@ export interface Cargo {
   updated_at: string;
 }
 
+export interface Team {
+  id: number;
+  name: string;
+  description: string | null;
+  color: string;
+  lead_id: number;
+  lead?: User;
+  members_count?: number;
+  created_at: string;
+  updated_at: string;
+}
+
+/** Resposta de GET /teams/:id — árvore sob o gestor (manager_id dentro do time). */
+export interface HierarchyNode {
+  id: number;
+  name: string;
+  email: string;
+  display_avatar: string | null;
+  role: UserRole;
+  level: number;
+  cargo?: Cargo | null;
+  is_lead: boolean;
+  children: HierarchyNode[];
+}
+
+export interface TeamDetailPayload {
+  team: Team;
+  hierarchy: HierarchyNode | null;
+  member_ids: number[];
+}
+
 export interface User {
   id: number;
   name: string;
@@ -22,6 +53,7 @@ export interface User {
   level: number;
   cargo_id: number | null;
   manager_id: number | null;
+  team_id: number | null;
   is_active: boolean;
   last_login_at: string | null;
   created_at: string;

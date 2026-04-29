@@ -1,5 +1,13 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { authService, userService, vacationService, reportService, roleService, cargoService } from '@/services'
+import {
+  authService,
+  userService,
+  vacationService,
+  reportService,
+  roleService,
+  cargoService,
+  teamService,
+} from '@/services'
 import type { User } from '@/types'
 import toast from 'react-hot-toast'
 
@@ -141,6 +149,78 @@ export const useOrganizationTree = () => {
   return useQuery({
     queryKey: ['organization', 'tree'],
     queryFn: userService.getOrganizationTree,
+  })
+}
+
+export const useTeams = (enabled = true) => {
+  return useQuery({
+    queryKey: ['teams'],
+    queryFn: teamService.getAll,
+    enabled,
+  })
+}
+
+export const useTeam = (id: number | null) => {
+  return useQuery({
+    queryKey: ['teams', id],
+    queryFn: () => teamService.getById(id!),
+    enabled: id != null && id > 0,
+  })
+}
+
+export const useCreateTeam = () => {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: teamService.create,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['teams'] })
+      queryClient.invalidateQueries({ queryKey: ['users'] })
+      queryClient.invalidateQueries({ queryKey: ['users', 'directory'] })
+      toast.success('Time criado')
+    },
+    onError: () => toast.error('Não foi possível criar o time'),
+  })
+}
+
+export const useUpdateTeam = () => {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: ({ id, data }: { id: number; data: Parameters<typeof teamService.update>[1] }) =>
+      teamService.update(id, data),
+    onSuccess: (_d, { id }) => {
+      queryClient.invalidateQueries({ queryKey: ['teams'] })
+      queryClient.invalidateQueries({ queryKey: ['teams', id] })
+      toast.success('Time atualizado')
+    },
+    onError: () => toast.error('Não foi possível atualizar'),
+  })
+}
+
+export const useDeleteTeam = () => {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: teamService.delete,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['teams'] })
+      queryClient.invalidateQueries({ queryKey: ['users'] })
+      toast.success('Time removido')
+    },
+    onError: () => toast.error('Não foi possível remover o time'),
+  })
+}
+
+export const useSyncTeamMembers = () => {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: ({ id, user_ids }: { id: number; user_ids: number[] }) =>
+      teamService.syncMembers(id, user_ids),
+    onSuccess: (_d, { id }) => {
+      queryClient.invalidateQueries({ queryKey: ['teams', id] })
+      queryClient.invalidateQueries({ queryKey: ['teams'] })
+      queryClient.invalidateQueries({ queryKey: ['users'] })
+      toast.success('Membros atualizados')
+    },
+    onError: () => toast.error('Não foi possível atualizar os membros'),
   })
 }
 

@@ -28,6 +28,7 @@ class User extends Authenticatable
         'level',
         'cargo_id',
         'manager_id',
+        'team_id',
         'is_active',
         'last_login_at',
     ];
@@ -62,6 +63,11 @@ class User extends Authenticatable
     public function subordinates(): HasMany
     {
         return $this->hasMany(User::class, 'manager_id');
+    }
+
+    public function team(): BelongsTo
+    {
+        return $this->belongsTo(Team::class);
     }
 
     public function vacationRequests(): HasMany

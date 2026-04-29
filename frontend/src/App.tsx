@@ -15,6 +15,8 @@ import AuthErrorPage from '@/pages/AuthErrorPage'
 import AdminOnly from '@/components/AdminOnly'
 import UsersPage from '@/pages/UsersPage'
 import CargosPage from '@/pages/CargosPage'
+import TeamsPage from '@/pages/TeamsPage'
+import TeamDetailPage from '@/pages/TeamDetailPage'
 
 export default function App() {
   return (
@@ -48,6 +50,22 @@ export default function App() {
                 element={
                   <AdminOnly>
                     <CargosPage />
+                  </AdminOnly>
+                }
+              />
+              <Route
+                path="/teams"
+                element={
+                  <AdminOnly>
+                    <TeamsPage />
+                  </AdminOnly>
+                }
+              />
+              <Route
+                path="/teams/:id"
+                element={
+                  <AdminOnly>
+                    <TeamDetailPage />
                   </AdminOnly>
                 }
               />
