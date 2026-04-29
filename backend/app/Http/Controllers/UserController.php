@@ -90,23 +90,23 @@ class UserController extends Controller
                 ->orWhere('users.id', $auth->id);
         });
 
-        if ($request->has('role')) {
-            $query->whereHas('cargo', fn ($cq) => $cq->where('role', $request->role));
+        if ($request->filled('role')) {
+            $query->where('positions.role', $request->role);
         }
 
-        if ($request->has('manager_id')) {
-            $query->where('manager_id', $request->manager_id);
+        if ($request->filled('manager_id')) {
+            $query->where('users.manager_id', $request->manager_id);
         }
 
         if ($request->has('is_active')) {
-            $query->where('is_active', $request->boolean('is_active'));
+            $query->where('users.is_active', $request->boolean('is_active'));
         }
 
-        if ($request->has('search')) {
+        if ($request->filled('search')) {
             $search = $request->search;
             $query->where(function ($q) use ($search) {
-                $q->where('name', 'like', "%{$search}%")
-                    ->orWhere('email', 'like', "%{$search}%");
+                $q->where('users.name', 'like', "%{$search}%")
+                    ->orWhere('users.email', 'like', "%{$search}%");
             });
         }
 

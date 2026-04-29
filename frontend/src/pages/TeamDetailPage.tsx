@@ -68,7 +68,8 @@ export default function TeamDetailPage() {
       list = list.filter(
         (u) =>
           u.name.toLowerCase().includes(q) ||
-          u.email.toLowerCase().includes(q),
+          u.email.toLowerCase().includes(q) ||
+          (u.cargo?.name ?? '').toLowerCase().includes(q),
       )
     }
     return list
@@ -308,7 +309,7 @@ export default function TeamDetailPage() {
               </p>
               <input
                 type="search"
-                placeholder="Filtrar por nome ou e-mail…"
+                placeholder="Filtrar por nome, e-mail ou cargo…"
                 value={memberSearch}
                 onChange={(e) => setMemberSearch(e.target.value)}
                 className="mt-4 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
@@ -339,6 +340,9 @@ export default function TeamDetailPage() {
                             ) : null}
                           </span>
                           <span className="block truncate text-xs text-gray-500">{u.email}</span>
+                          <span className="mt-0.5 block truncate text-xs font-medium text-gray-600">
+                            {u.cargo?.name ?? 'Sem cargo'}
+                          </span>
                         </span>
                       </label>
                     </li>
