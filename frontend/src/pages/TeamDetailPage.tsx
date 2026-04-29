@@ -235,9 +235,11 @@ export default function TeamDetailPage() {
           <h2 className="text-lg font-bold text-gray-900">Hierarquia</h2>
         </div>
         <p className="mb-6 text-sm text-gray-500">
-          A árvore segue o campo <strong className="text-gray-700">gestor</strong> de cada utilizador (na edição de
-          usuários). Quem reporta ao gestor ou a alguém dentro do time aparece abaixo; para aparecer na árvore, o
-          gestor direto deve estar no mesmo time.
+          A árvore usa o <strong className="text-gray-700">gestor direto</strong> de cada pessoa (edição de usuários).
+          Subordinados aparecem encadeados quando o gestor também está no time. Membros só adicionados ao time sem
+          gestor definido aparecem abaixo do gestor com o aviso{' '}
+          <span className="font-medium text-amber-900">Gestor não ligado na hierarquia</span> — edite o utilizador e
+          defina o gestor para montar a pirâmide corretamente.
         </p>
 
         {hierarchy ? (

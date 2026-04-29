@@ -31,6 +31,8 @@ export interface HierarchyNode {
   display_avatar: string | null;
   cargo?: Cargo | null;
   is_lead: boolean;
+  /** Membro do time sem cadeia gestor→subordinado via manager_id (mostrado sob o gestor). */
+  orphan_hierarchy?: boolean;
   children: HierarchyNode[];
 }
 

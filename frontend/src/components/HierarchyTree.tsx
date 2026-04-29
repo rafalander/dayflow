@@ -42,6 +42,11 @@ export default function HierarchyTree({ node, accentColor, depth = 0 }: Hierarch
                   Gestor
                 </span>
               ) : null}
+              {node.orphan_hierarchy ? (
+                <span className="rounded-full bg-amber-50 px-2 py-0.5 text-xs font-medium text-amber-900 ring-1 ring-amber-200/80">
+                  Gestor não ligado na hierarquia
+                </span>
+              ) : null}
             </div>
             <p className="truncate text-sm text-gray-500">{node.email}</p>
             <p className="mt-1 text-xs font-medium text-gray-700">{cargoLabel}</p>

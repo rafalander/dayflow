@@ -56,10 +56,42 @@ class Team extends Model
                 'display_avatar' => $user->display_avatar,
                 'cargo' => $user->cargo,
                 'is_lead' => (int) $user->id === (int) $this->lead_id,
+                'orphan_hierarchy' => false,
                 'children' => $children->map(fn (User $c) => $node($c))->values()->all(),
             ];
         };
 
-        return $node($lead);
+        $tree = $node($lead);
+
+        $collectIds = function (array $n) use (&$collectIds): array {
+            $ids = [$n['id']];
+            foreach ($n['children'] ?? [] as $c) {
+                $ids = array_merge($ids, $collectIds($c));
+            }
+
+            return $ids;
+        };
+
+        $idsInTree = $collectIds($tree);
+
+        $orphans = $members
+            ->filter(fn (User $u) => (int) $u->id !== (int) $lead->id && ! in_array($u->id, $idsInTree, true))
+            ->sortBy('name')
+            ->values();
+
+        foreach ($orphans as $u) {
+            $tree['children'][] = [
+                'id' => $u->id,
+                'name' => $u->name,
+                'email' => $u->email,
+                'display_avatar' => $u->display_avatar,
+                'cargo' => $u->cargo,
+                'is_lead' => false,
+                'orphan_hierarchy' => true,
+                'children' => [],
+            ];
+        }
+
+        return $tree;
     }
 }
