@@ -1,0 +1,91 @@
+export interface User {
+  id: number;
+  name: string;
+  email: string;
+  avatar: string | null;
+  custom_avatar: string | null;
+  display_avatar: string | null;
+  role_id: number | null;
+  manager_id: number | null;
+  is_active: boolean;
+  last_login_at: string | null;
+  created_at: string;
+  updated_at: string;
+  role?: Role;
+  manager?: User;
+  subordinates?: User[];
+  vacationRequests?: VacationRequest[];
+}
+
+export interface Role {
+  id: number;
+  name: string;
+  slug: string;
+  weight: number;
+  color: string;
+  permissions: string[] | null;
+  description: string | null;
+  is_admin: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+/** Paginação no formato Laravel */
+export interface LaravelPaginator<T> {
+  current_page: number;
+  data: T[];
+  last_page: number;
+  per_page: number;
+  total: number;
+  from: number | null;
+  to: number | null;
+}
+
+export interface VacationRequest {
+  id: number;
+  user_id: number;
+  approver_id: number | null;
+  start_date: string;
+  end_date: string;
+  reason: string | null;
+  status: 'pending' | 'approved' | 'rejected';
+  created_at: string;
+  updated_at: string;
+  user?: User;
+  approver?: User;
+  comments?: string;
+}
+
+export interface VacationReportGroup {
+  user: User;
+  vacations: VacationRequest[];
+  total_days: number;
+}
+
+export interface Setting {
+  id: number;
+  key: string;
+  value: string;
+  description: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface AuditLog {
+  id: number;
+  user_id: number;
+  action: string;
+  model_type: string;
+  model_id: number | null;
+  ip_address: string;
+  user_agent: string;
+  created_at: string;
+  user?: User;
+}
+
+export interface ApiResponse<T> {
+  data: T;
+  message?: string;
+  status: 'success' | 'error' | 'pending';
+  errors?: Record<string, string[]>;
+}

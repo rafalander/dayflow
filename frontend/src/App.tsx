@@ -1,0 +1,40 @@
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom'
+import { QueryClientProvider } from '@tanstack/react-query'
+import { Toaster } from 'react-hot-toast'
+import queryClient from '@/lib/queryClient'
+import ProtectedRoute from '@/components/ProtectedRoute'
+import Layout from '@/components/Layout'
+import LoginPage from '@/pages/LoginPage'
+import AdminLoginPage from '@/pages/AdminLoginPage'
+import DashboardPage from '@/pages/DashboardPage'
+import VacationsPage from '@/pages/VacationsPage'
+import ApprovalsPage from '@/pages/ApprovalsPage'
+import ReportsPage from '@/pages/ReportsPage'
+import ProfilePage from '@/pages/ProfilePage'
+
+export default function App() {
+  return (
+    <QueryClientProvider client={queryClient}>
+      <Router>
+        <Routes>
+          <Route path="/auth/login" element={<LoginPage />} />
+          <Route path="/auth/login/admin" element={<AdminLoginPage />} />
+
+          <Route element={<ProtectedRoute />}>
+            <Route element={<Layout />}>
+              <Route index element={<Navigate to="/dashboard" replace />} />
+              <Route path="/dashboard" element={<DashboardPage />} />
+              <Route path="/vacations" element={<VacationsPage />} />
+              <Route path="/approvals" element={<ApprovalsPage />} />
+              <Route path="/reports" element={<ReportsPage />} />
+              <Route path="/profile" element={<ProfilePage />} />
+            </Route>
+          </Route>
+
+          <Route path="*" element={<Navigate to="/dashboard" replace />} />
+        </Routes>
+      </Router>
+      <Toaster position="top-right" />
+    </QueryClientProvider>
+  )
+}
