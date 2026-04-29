@@ -29,8 +29,6 @@ export interface HierarchyNode {
   name: string;
   email: string;
   display_avatar: string | null;
-  role: UserRole;
-  level: number;
   cargo?: Cargo | null;
   is_lead: boolean;
   children: HierarchyNode[];
@@ -42,6 +40,7 @@ export interface TeamDetailPayload {
   member_ids: number[];
 }
 
+/** Perfil sem role/level próprios — hierarquia só via `cargo`. */
 export interface User {
   id: number;
   name: string;
@@ -49,9 +48,7 @@ export interface User {
   avatar: string | null;
   custom_avatar: string | null;
   display_avatar: string | null;
-  role: UserRole;
-  level: number;
-  cargo_id: number | null;
+  cargo_id: number;
   manager_id: number | null;
   team_id: number | null;
   is_active: boolean;
@@ -64,7 +61,7 @@ export interface User {
   vacationRequests?: VacationRequest[];
 }
 
-/** Compatível com GET /roles (lista fixa para selects). */
+/** Compatível com GET /roles (lista fixa para selects de cargo). */
 export interface Role {
   id: number;
   name: string;

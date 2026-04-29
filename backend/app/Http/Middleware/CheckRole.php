@@ -11,8 +11,9 @@ class CheckRole
     public function handle(Request $request, Closure $next, string $role): Response
     {
         $user = $request->user();
+        $user?->loadMissing('cargo');
 
-        if (! $user || $user->role !== $role) {
+        if (! $user || ($user->cargo?->role ?? null) !== $role) {
             return response()->json([
                 'message' => 'Unauthorized',
                 'status' => 'error',

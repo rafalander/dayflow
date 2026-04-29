@@ -5,7 +5,7 @@ import type { Cargo, UserRole } from '@/types'
 
 export default function CargosPage() {
   const { meQuery } = useAuth()
-  const authLevel = meQuery.data?.level ?? 0
+  const authLevel = meQuery.data?.cargo?.level ?? 0
   const maxLevel = Math.max(1, authLevel - 1)
 
   const { data: cargos = [], isPending, isError } = useCargos(true)

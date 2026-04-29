@@ -18,37 +18,28 @@ class UserController extends Controller
         $this->authorize('create', User::class);
 
         $auth = $request->user();
-        $maxLevel = max(1, $auth->level - 1);
+        $auth->loadMissing('cargo');
 
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|email|unique:users,email',
             'password' => 'required|string|min:8',
-            'cargo_id' => 'nullable|exists:positions,id',
+            'cargo_id' => 'required|exists:positions,id',
             'manager_id' => 'nullable|exists:users,id',
             'is_active' => 'sometimes|boolean',
         ]);
 
-        if (! empty($validated['cargo_id'])) {
-            $cargo = Cargo::findOrFail($validated['cargo_id']);
-            if ($cargo->level >= $auth->level) {
-                throw ValidationException::withMessages([
-                    'cargo_id' => ['Este cargo tem nível igual ou superior ao seu.'],
-                ]);
-            }
-            $validated['role'] = $cargo->role;
-            $validated['level'] = $cargo->level;
-        } else {
-            $more = $request->validate([
-                'role' => 'required|in:admin,user',
-                'level' => ['required', 'integer', 'min:1', 'max:'.$maxLevel],
+        $cargo = Cargo::findOrFail($validated['cargo_id']);
+
+        if ($cargo->level >= UserHierarchy::level($auth)) {
+            throw ValidationException::withMessages([
+                'cargo_id' => ['Este cargo tem nível igual ou superior ao seu.'],
             ]);
-            $validated = array_merge($validated, $more);
         }
 
-        if (! UserHierarchy::canAssignLevel($auth, $validated['level'])) {
+        if (! UserHierarchy::canAssignLevel($auth, $cargo->level)) {
             throw ValidationException::withMessages([
-                'level' => ['Nível inválido para o seu perfil.'],
+                'cargo_id' => ['Nível do cargo inválido para o seu perfil.'],
             ]);
         }
 
@@ -57,9 +48,7 @@ class UserController extends Controller
             'email' => $validated['email'],
             'password' => $validated['password'],
             'google_id' => 'manual-'.Str::uuid()->toString(),
-            'role' => $validated['role'],
-            'level' => $validated['level'],
-            'cargo_id' => $validated['cargo_id'] ?? null,
+            'cargo_id' => $cargo->id,
             'manager_id' => $validated['manager_id'] ?? null,
             'is_active' => $validated['is_active'] ?? true,
         ]);
@@ -73,8 +62,7 @@ class UserController extends Controller
             null,
             [
                 'email' => $user->email,
-                'role' => $user->role,
-                'level' => $user->level,
+                'cargo_id' => $user->cargo_id,
             ]
         );
 
@@ -90,16 +78,20 @@ class UserController extends Controller
         $this->authorize('viewAny', User::class);
 
         $auth = $request->user();
+        $auth->loadMissing('cargo');
+        $authLevel = UserHierarchy::level($auth);
 
-        $query = User::with('manager', 'cargo');
+        $query = User::query()
+            ->with('manager', 'cargo')
+            ->join('positions', 'users.cargo_id', '=', 'positions.id');
 
-        $query->where(function ($q) use ($auth) {
-            $q->where('level', '<', $auth->level)
-                ->orWhere('id', $auth->id);
+        $query->where(function ($q) use ($authLevel, $auth) {
+            $q->where('positions.level', '<', $authLevel)
+                ->orWhere('users.id', $auth->id);
         });
 
         if ($request->has('role')) {
-            $query->where('role', $request->role);
+            $query->whereHas('cargo', fn ($cq) => $cq->where('role', $request->role));
         }
 
         if ($request->has('manager_id')) {
@@ -118,7 +110,10 @@ class UserController extends Controller
             });
         }
 
-        $users = $query->orderByDesc('level')->paginate($request->input('per_page', 15));
+        $users = $query
+            ->orderByDesc('positions.level')
+            ->select('users.*')
+            ->paginate($request->input('per_page', 15));
 
         return response()->json([
             'data' => $users,
@@ -143,22 +138,20 @@ class UserController extends Controller
         $this->authorize('update', $user);
 
         $auth = $request->user();
-        $maxLevel = max(1, $auth->level - 1);
+        $auth->loadMissing('cargo');
 
         $validated = $request->validate([
             'name' => 'sometimes|string|max:255',
             'email' => 'sometimes|email|unique:users,email,'.$user->id,
             'password' => 'sometimes|nullable|string|min:8',
-            'role' => 'sometimes|in:admin,user',
-            'level' => ['sometimes', 'integer', 'min:1', 'max:'.$maxLevel],
-            'cargo_id' => 'sometimes|nullable|exists:positions,id',
+            'cargo_id' => 'sometimes|exists:positions,id',
             'manager_id' => 'sometimes|nullable|exists:users,id|different:id',
             'is_active' => 'sometimes|boolean',
             'custom_avatar' => 'sometimes|nullable|url',
         ]);
 
         if ($auth->id === $user->id) {
-            unset($validated['role'], $validated['level'], $validated['is_active']);
+            unset($validated['cargo_id'], $validated['is_active']);
         }
 
         if ($request->filled('password')) {
@@ -169,38 +162,26 @@ class UserController extends Controller
 
         if ($auth->id !== $user->id && array_key_exists('cargo_id', $validated)) {
             $cid = $validated['cargo_id'];
-            if ($cid) {
-                $cargo = Cargo::findOrFail($cid);
-                if ($cargo->level >= $auth->level) {
-                    throw ValidationException::withMessages([
-                        'cargo_id' => ['Este cargo tem nível igual ou superior ao seu.'],
-                    ]);
-                }
-                $validated['role'] = $cargo->role;
-                $validated['level'] = $cargo->level;
-            }
-        }
-
-        if ($auth->id !== $user->id && isset($validated['level'])) {
-            if ($validated['level'] >= $auth->level) {
+            $cargo = Cargo::findOrFail($cid);
+            if ($cargo->level >= UserHierarchy::level($auth)) {
                 throw ValidationException::withMessages([
-                    'level' => ['Não pode atribuir nível igual ou superior ao seu.'],
+                    'cargo_id' => ['Este cargo tem nível igual ou superior ao seu.'],
                 ]);
             }
-            if (! UserHierarchy::canAssignLevel($auth, $validated['level'])) {
+            if (! UserHierarchy::canAssignLevel($auth, $cargo->level)) {
                 throw ValidationException::withMessages([
-                    'level' => ['Nível inválido.'],
+                    'cargo_id' => ['Nível do cargo inválido.'],
                 ]);
             }
         }
 
-        $before = $user->only(['name', 'email', 'role', 'level', 'is_active', 'cargo_id', 'manager_id']);
+        $before = $user->only(['name', 'email', 'is_active', 'cargo_id', 'manager_id']);
 
         $user->update($validated);
         $user->load('manager', 'cargo');
 
         AuditLog::log('user_updated', User::class, $user->id, $before, $user->only([
-            'name', 'email', 'role', 'level', 'is_active', 'cargo_id', 'manager_id',
+            'name', 'email', 'is_active', 'cargo_id', 'manager_id',
         ]));
 
         return response()->json([
@@ -215,7 +196,7 @@ class UserController extends Controller
         $this->authorize('viewAny', User::class);
 
         $rootUsers = User::whereNull('manager_id')
-            ->with('subordinates')
+            ->with(['subordinates', 'cargo'])
             ->get();
 
         return response()->json([
@@ -226,7 +207,7 @@ class UserController extends Controller
 
     public function subordinates(User $user): JsonResponse
     {
-        $subordinates = $user->subordinates()->with('subordinates')->get();
+        $subordinates = $user->subordinates()->with(['subordinates', 'cargo'])->get();
 
         return response()->json([
             'data' => $subordinates,

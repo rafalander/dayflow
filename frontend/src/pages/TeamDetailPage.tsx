@@ -11,6 +11,7 @@ import {
   useSyncTeamMembers,
   useDeleteTeam,
 } from '@/hooks'
+import { isAdminUser } from '@/lib/auth'
 import type { User } from '@/types'
 
 const DEFAULT_COLOR = '#6366f1'
@@ -21,7 +22,7 @@ export default function TeamDetailPage() {
   const teamId = idParam ? Number(idParam) : null
 
   const { meQuery } = useAuth()
-  const isAdmin = meQuery.data?.role === 'admin'
+  const isAdmin = isAdminUser(meQuery.data)
 
   const { data, isPending, isError, refetch } = useTeam(teamId)
   const updateMut = useUpdateTeam()
@@ -194,7 +195,7 @@ export default function TeamDetailPage() {
                 <UserAvatar name={team.lead.name} src={team.lead.display_avatar} size="sm" />
                 <div>
                   <p className="text-sm font-semibold text-gray-800">{team.lead.name}</p>
-                  <p className="text-xs text-gray-500">Gestor do time · nv {team.lead.level}</p>
+                  <p className="text-xs text-gray-500">{team.lead.cargo?.name ?? 'Gestor do time'}</p>
                 </div>
               </div>
             ) : null}

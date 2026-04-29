@@ -4,6 +4,7 @@ namespace App\Policies;
 
 use App\Models\User;
 use App\Models\VacationRequest;
+use App\Support\UserHierarchy;
 
 class VacationRequestPolicy
 {
@@ -13,7 +14,8 @@ class VacationRequestPolicy
             return true;
         }
 
-        return $user->role === 'admin' && $user->level > $vacation->user->level;
+        return UserHierarchy::isAdmin($user)
+            && UserHierarchy::level($user) > UserHierarchy::level($vacation->user);
     }
 
     public function delete(User $user, VacationRequest $vacation): bool
@@ -22,7 +24,8 @@ class VacationRequestPolicy
             return true;
         }
 
-        return $user->role === 'admin' && $user->level > $vacation->user->level;
+        return UserHierarchy::isAdmin($user)
+            && UserHierarchy::level($user) > UserHierarchy::level($vacation->user);
     }
 
     public function approve(User $user, VacationRequest $vacation): bool
@@ -31,7 +34,8 @@ class VacationRequestPolicy
             return true;
         }
 
-        if ($user->role === 'admin' && $user->level > $vacation->user->level) {
+        if (UserHierarchy::isAdmin($user)
+            && UserHierarchy::level($user) > UserHierarchy::level($vacation->user)) {
             return true;
         }
 
@@ -40,7 +44,7 @@ class VacationRequestPolicy
 
     private function isHierarchyAbove(User $checker, User $target): bool
     {
-        if ($checker->level > $target->level) {
+        if (UserHierarchy::level($checker) > UserHierarchy::level($target)) {
             return true;
         }
 

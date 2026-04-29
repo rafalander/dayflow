@@ -13,10 +13,6 @@ class User extends Authenticatable
 {
     use HasApiTokens, HasFactory, Notifiable;
 
-    public const ROLE_ADMIN = 'admin';
-
-    public const ROLE_USER = 'user';
-
     protected $fillable = [
         'name',
         'email',
@@ -24,8 +20,6 @@ class User extends Authenticatable
         'google_id',
         'avatar',
         'custom_avatar',
-        'role',
-        'level',
         'cargo_id',
         'manager_id',
         'team_id',
@@ -43,7 +37,6 @@ class User extends Authenticatable
         'is_active' => 'boolean',
         'last_login_at' => 'datetime',
         'password' => 'hashed',
-        'level' => 'integer',
     ];
 
     protected $appends = ['display_avatar'];
@@ -96,13 +89,14 @@ class User extends Authenticatable
 
     // ─── Authorization Helpers ───────────────────
 
+    /** Administrador = cargo com role "admin" na tabela positions. */
     public function isAdmin(): bool
     {
-        return $this->role === self::ROLE_ADMIN;
+        return \App\Support\UserHierarchy::isAdmin($this);
     }
 
     /**
-     * Compatibilidade: permissões granulares via cargo/role — apenas admin tem poder administrativo base.
+     * Compatibilidade: permissões amplas seguem isAdmin().
      */
     public function hasPermission(string $permission): bool
     {

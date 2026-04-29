@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Cargo;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
@@ -131,15 +132,22 @@ class AuthController extends Controller
                 $user = User::where('email', $googleUser->email)->first();
                 
                 if (!$user) {
+                    $cargoId = Cargo::where('slug', config('dayflow.system_cargo_slugs.default'))->value('id');
+                    if (! $cargoId) {
+                        Log::error('Dayflow: cargo default ausente (slug '.config('dayflow.system_cargo_slugs.default').').');
+
+                        return redirect(env('FRONTEND_URL').'/auth/error?reason=config');
+                    }
+
                     $user = User::create([
                         'name' => $googleUser->name,
                         'email' => $googleUser->email,
                         'google_id' => $googleUser->id,
                         'avatar' => $googleUser->avatar,
-                        'role' => User::ROLE_USER,
-                        'level' => (int) config('dayflow.default_user_level', 20),
+                        'cargo_id' => $cargoId,
                         'is_active' => true,
                     ]);
+                    $user->load('cargo');
                 } else {
                     $user->update([
                         'google_id' => $googleUser->id,
@@ -150,6 +158,9 @@ class AuthController extends Controller
 
             // Update last login
             $user->update(['last_login_at' => now()]);
+
+            $user->refresh();
+            $user->load('cargo');
 
             // Generate token
             $token = $user->createToken('api-token')->plainTextToken;

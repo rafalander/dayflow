@@ -5,14 +5,23 @@ namespace App\Support;
 use App\Models\User;
 
 /**
- * Regras de hierarquia: nível numérico maior = mais autoridade.
- * Só utilizadores com role "admin" podem gerir outros; é obrigatório level do gestor > level do alvo.
+ * Hierarquia só via cargo (positions.role / positions.level).
+ * Nível maior = mais autoridade. Admins (cargo.role = admin) gerem quem tem nível inferior.
  */
 final class UserHierarchy
 {
+    public static function level(User $user): int
+    {
+        $user->loadMissing('cargo');
+
+        return (int) ($user->cargo?->level ?? 0);
+    }
+
     public static function isAdmin(User $user): bool
     {
-        return $user->role === 'admin';
+        $user->loadMissing('cargo');
+
+        return ($user->cargo?->role ?? null) === 'admin';
     }
 
     /** Ver/detalhes de outro utilizador (não inclui edição). */
@@ -26,7 +35,7 @@ final class UserHierarchy
             return false;
         }
 
-        return $auth->level > $target->level;
+        return self::level($auth) > self::level($target);
     }
 
     /** Criar/editar/desativar outro utilizador. */
@@ -40,16 +49,16 @@ final class UserHierarchy
             return false;
         }
 
-        return $auth->level > $target->level;
+        return self::level($auth) > self::level($target);
     }
 
-    /** Novo utilizador deve ficar estritamente abaixo do criador. */
-    public static function canAssignLevel(User $auth, int $newLevel): bool
+    /** Novo utilizador deve ficar estritamente abaixo do criador (nível do cargo). */
+    public static function canAssignLevel(User $auth, int $newCargoLevel): bool
     {
         if (! self::isAdmin($auth)) {
             return false;
         }
 
-        return $newLevel < $auth->level;
+        return $newCargoLevel < self::level($auth);
     }
 }

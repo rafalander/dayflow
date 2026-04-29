@@ -8,6 +8,7 @@ import {
   useAuth,
   useUserDirectory,
 } from '@/hooks'
+import { isAdminUser } from '@/lib/auth'
 import type { User } from '@/types'
 
 const DEFAULT_COLOR = '#6366f1'
@@ -15,7 +16,7 @@ const DEFAULT_COLOR = '#6366f1'
 export default function TeamsPage() {
   const navigate = useNavigate()
   const { meQuery } = useAuth()
-  const isAdmin = meQuery.data?.role === 'admin'
+  const isAdmin = isAdminUser(meQuery.data)
 
   const { data: teams = [], isPending, isError } = useTeams(isAdmin)
   const createMut = useCreateTeam()
@@ -141,7 +142,7 @@ export default function TeamsPage() {
                         <UserAvatar name={lead.name} src={lead.display_avatar} size="sm" />
                         <div className="min-w-0 flex-1">
                           <p className="truncate text-sm font-semibold text-gray-800">{lead.name}</p>
-                          <p className="text-xs text-gray-500">Gestor · nv {lead.level}</p>
+                          <p className="text-xs text-gray-500">{lead.cargo?.name ?? 'Gestor'}</p>
                         </div>
                       </>
                     ) : (
@@ -239,7 +240,7 @@ export default function TeamsPage() {
                   <option value="">Selecione…</option>
                   {leadOptions.map((u) => (
                     <option key={u.id} value={u.id}>
-                      {u.name} · nv {u.level} ({u.role === 'admin' ? 'Admin' : 'Usuário'})
+                      {u.name} · {u.cargo?.name ?? '—'}
                     </option>
                   ))}
                 </select>

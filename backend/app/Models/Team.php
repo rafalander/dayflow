@@ -54,8 +54,6 @@ class Team extends Model
                 'name' => $user->name,
                 'email' => $user->email,
                 'display_avatar' => $user->display_avatar,
-                'role' => $user->role,
-                'level' => $user->level,
                 'cargo' => $user->cargo,
                 'is_lead' => (int) $user->id === (int) $this->lead_id,
                 'children' => $children->map(fn (User $c) => $node($c))->values()->all(),

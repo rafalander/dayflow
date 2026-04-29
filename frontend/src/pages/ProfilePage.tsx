@@ -2,7 +2,7 @@ import type { ReactNode } from 'react'
 import type { LucideIcon } from 'lucide-react'
 import { useAuth } from '@/hooks'
 import { formatDateBR, formatDateTimeBR } from '@/utils/date'
-import { Loader, Mail, Briefcase, Shield, CalendarClock, CalendarDays, Layers, Hash } from 'lucide-react'
+import { Loader, Mail, Briefcase, CalendarClock, CalendarDays } from 'lucide-react'
 import UserAvatar from '@/components/UserAvatar'
 
 function InfoRow({
@@ -45,7 +45,6 @@ export default function ProfilePage() {
     )
   }
 
-  const roleName = user.role === 'admin' ? 'Administrador' : 'Usuário'
   const cargoName = user.cargo?.name ?? '—'
 
   const memberSince = user.created_at ? formatDateBR(user.created_at) : '—'
@@ -82,15 +81,10 @@ export default function ProfilePage() {
               <Mail size={16} className="shrink-0 text-gray-500" aria-hidden />
               <span className="truncate text-gray-800">{user.email}</span>
             </p>
-            <div className="mt-3 flex flex-wrap gap-2">
+            <div className="mt-3">
               <span className="inline-flex items-center rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold text-primary">
-                {roleName}
+                {cargoName}
               </span>
-              {user.role === 'admin' && (
-                <span className="inline-flex items-center rounded-full bg-amber-50 px-2.5 py-1 text-xs font-medium text-amber-900 ring-1 ring-amber-200/90">
-                  Administrador
-                </span>
-              )}
             </div>
           </div>
         </div>
@@ -99,18 +93,16 @@ export default function ProfilePage() {
       <section className="rounded-2xl border border-gray-200/80 bg-white p-6 shadow-sm ring-1 ring-black/[0.03] sm:p-8">
         <div className="mb-2 flex items-center gap-2.5">
           <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary/10">
-            <Shield className="h-5 w-5 text-primary" aria-hidden />
+            <Briefcase className="h-5 w-5 text-primary" aria-hidden />
           </div>
           <div>
             <h3 className="text-base font-semibold text-gray-900">Informações da conta</h3>
-            <p className="text-xs text-gray-500">Dados somente leitura sincronizados com o sistema.</p>
+            <p className="text-xs text-gray-500">Hierarquia e permissões vêm apenas do cargo atribuído.</p>
           </div>
         </div>
 
         <div className="mt-4 border-t border-gray-100 pt-2">
           <InfoRow icon={Briefcase} label="Cargo" value={cargoName} />
-          <InfoRow icon={Layers} label="Perfil de acesso (role)" value={roleName} />
-          <InfoRow icon={Hash} label="Nível hierárquico" value={user.level} />
           <InfoRow icon={CalendarDays} label="Membro desde" value={memberSince} />
           <InfoRow icon={CalendarClock} label="Último acesso" value={lastLogin} />
         </div>

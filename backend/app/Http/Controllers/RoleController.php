@@ -21,7 +21,7 @@ class RoleController extends Controller
                     'is_admin' => true,
                     'color' => '#6366F1',
                     'permissions' => null,
-                    'description' => 'Acesso administrativo (nível hierárquico separado em users.level)',
+                    'description' => 'Acesso administrativo — hierarquia definida pelo cargo (positions.level)',
                 ],
                 [
                     'id' => 2,

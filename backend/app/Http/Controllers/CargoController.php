@@ -3,13 +3,14 @@
 namespace App\Http\Controllers;
 
 use App\Models\Cargo;
+use App\Support\UserHierarchy;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Str;
+use Illuminate\Validation\ValidationException;
 
 class CargoController extends Controller
 {
-    public function index(): JsonResponse
+    public function index(Request $request): JsonResponse
     {
         $this->authorize('viewAny', Cargo::class);
 
@@ -26,20 +27,19 @@ class CargoController extends Controller
         $this->authorize('create', Cargo::class);
 
         $auth = $request->user();
-        $maxLevel = max(1, $auth->level - 1);
+        $auth->loadMissing('cargo');
+        $maxLevel = max(1, UserHierarchy::level($auth) - 1);
 
         $validated = $request->validate([
             'name' => 'required|string|max:150',
-            'description' => 'nullable|string',
+            'description' => 'nullable|string|max:2000',
             'role' => 'required|in:admin,user',
             'level' => ['required', 'integer', 'min:1', 'max:'.$maxLevel],
         ]);
 
-        $slug = $this->uniqueSlug(Str::slug($validated['name']));
-
         $cargo = Cargo::create([
             'name' => $validated['name'],
-            'slug' => $slug,
+            'slug' => Cargo::uniqueSlugFromName($validated['name']),
             'description' => $validated['description'] ?? null,
             'role' => $validated['role'],
             'level' => $validated['level'],
@@ -57,27 +57,25 @@ class CargoController extends Controller
         $this->authorize('update', $cargo);
 
         $auth = $request->user();
-        $maxLevel = max(1, $auth->level - 1);
+        $auth->loadMissing('cargo');
+        $maxLevel = max(1, UserHierarchy::level($auth) - 1);
 
         $validated = $request->validate([
             'name' => 'sometimes|string|max:150',
-            'description' => 'sometimes|nullable|string',
+            'description' => 'nullable|string|max:2000',
             'role' => 'sometimes|in:admin,user',
             'level' => ['sometimes', 'integer', 'min:1', 'max:'.$maxLevel],
         ]);
 
-        if (isset($validated['name'])) {
-            $validated['slug'] = $this->uniqueSlug(Str::slug($validated['name']), $cargo->id);
+        if (isset($validated['role']) || isset($validated['level'])) {
+            if ($cargo->level >= UserHierarchy::level($auth)) {
+                throw ValidationException::withMessages([
+                    'level' => ['Não pode alterar um cargo do seu nível ou acima.'],
+                ]);
+            }
         }
 
         $cargo->update($validated);
-
-        if (isset($validated['role']) || isset($validated['level'])) {
-            $cargo->users()->update([
-                'role' => $cargo->role,
-                'level' => $cargo->level,
-            ]);
-        }
 
         return response()->json([
             'data' => $cargo->fresh(),
@@ -91,10 +89,18 @@ class CargoController extends Controller
         $this->authorize('delete', $cargo);
 
         if ($cargo->users()->exists()) {
-            return response()->json([
-                'message' => 'Não é possível excluir um cargo com usuários vinculados',
-                'status' => 'error',
-            ], 422);
+            throw ValidationException::withMessages([
+                'cargo' => ['Existem utilizadores com este cargo.'],
+            ]);
+        }
+
+        $auth = request()->user();
+        $auth?->loadMissing('cargo');
+
+        if ($cargo->level >= UserHierarchy::level($auth)) {
+            throw ValidationException::withMessages([
+                'cargo' => ['Não pode remover este cargo.'],
+            ]);
         }
 
         $cargo->delete();
@@ -103,22 +109,5 @@ class CargoController extends Controller
             'message' => 'Cargo removido',
             'status' => 'success',
         ]);
-    }
-
-    private function uniqueSlug(string $base, ?int $ignoreId = null): string
-    {
-        $slug = $base !== '' ? $base : 'cargo';
-        $candidate = $slug;
-        $n = 0;
-
-        while (
-            Cargo::where('slug', $candidate)
-                ->when($ignoreId, fn ($q) => $q->where('id', '!=', $ignoreId))
-                ->exists()
-        ) {
-            $candidate = $slug.'-'.(++$n);
-        }
-
-        return $candidate;
     }
 }

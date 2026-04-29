@@ -10,6 +10,7 @@ interface HierarchyTreeProps {
 export default function HierarchyTree({ node, accentColor, depth = 0 }: HierarchyTreeProps) {
   const children = node.children ?? []
   const hasChildren = children.length > 0
+  const cargoLabel = node.cargo?.name ?? '—'
 
   return (
     <div className={depth === 0 ? '' : 'relative mt-3'}>
@@ -41,14 +42,9 @@ export default function HierarchyTree({ node, accentColor, depth = 0 }: Hierarch
                   Gestor
                 </span>
               ) : null}
-              <span className="rounded-md bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-600">
-                nv {node.level}
-              </span>
             </div>
             <p className="truncate text-sm text-gray-500">{node.email}</p>
-            {node.cargo ? (
-              <p className="mt-1 text-xs font-medium text-gray-700">{node.cargo.name}</p>
-            ) : null}
+            <p className="mt-1 text-xs font-medium text-gray-700">{cargoLabel}</p>
           </div>
         </div>
       </div>

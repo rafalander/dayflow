@@ -60,9 +60,7 @@ export const userService = {
     name: string
     email: string
     password: string
-    role?: UserRole
-    level?: number
-    cargo_id?: number | null
+    cargo_id: number
     manager_id?: number | null
     is_active?: boolean
   }) => {
@@ -72,9 +70,7 @@ export const userService = {
 
   update: async (
     id: number,
-    data: Partial<
-      Pick<User, 'name' | 'email' | 'role' | 'level' | 'cargo_id' | 'manager_id' | 'is_active'> & { password?: string }
-    >,
+    data: Partial<Pick<User, 'name' | 'email' | 'cargo_id' | 'manager_id' | 'is_active'> & { password?: string }>,
   ) => {
     const response = await api.put<ApiResponse<User>>(`/users/${id}`, data)
     return response.data.data

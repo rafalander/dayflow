@@ -16,7 +16,7 @@ class TeamController extends Controller
         $this->authorize('viewAny', Team::class);
 
         $teams = Team::query()
-            ->with('lead')
+            ->with(['lead.cargo'])
             ->withCount('members')
             ->orderBy('name')
             ->get();
@@ -63,7 +63,7 @@ class TeamController extends Controller
 
         $lead->update(['team_id' => $team->id]);
 
-        $team->load('lead');
+        $team->load(['lead.cargo']);
         $team->loadCount('members');
 
         return response()->json([
@@ -77,7 +77,7 @@ class TeamController extends Controller
     {
         $this->authorize('view', $team);
 
-        $team->load('lead');
+        $team->load(['lead.cargo']);
         $team->loadCount('members');
 
         $tree = $team->buildHierarchyTree();
@@ -106,7 +106,7 @@ class TeamController extends Controller
 
         $team->update(array_filter($validated, fn ($v) => $v !== null));
 
-        $team->load('lead');
+        $team->load(['lead.cargo']);
         $team->loadCount('members');
 
         return response()->json([
@@ -161,7 +161,7 @@ class TeamController extends Controller
             User::whereKey($uid)->update(['team_id' => $team->id]);
         }
 
-        $team->load('lead');
+        $team->load(['lead.cargo']);
         $team->loadCount('members');
 
         $memberIds = User::where('team_id', $team->id)->orderBy('name')->pluck('id')->values()->all();
