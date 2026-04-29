@@ -11,12 +11,16 @@ import VacationsPage from '@/pages/VacationsPage'
 import ApprovalsPage from '@/pages/ApprovalsPage'
 import ReportsPage from '@/pages/ReportsPage'
 import ProfilePage from '@/pages/ProfilePage'
+import AuthErrorPage from '@/pages/AuthErrorPage'
 
 export default function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <Router>
         <Routes>
+          {/** Retorno do Google OAuth — mesmo handler do login (lê token na query) */}
+          <Route path="/auth/callback" element={<LoginPage />} />
+          <Route path="/auth/error" element={<AuthErrorPage />} />
           <Route path="/auth/login" element={<LoginPage />} />
           <Route path="/auth/login/admin" element={<AdminLoginPage />} />
 
