@@ -166,17 +166,26 @@ class VacationRequestController extends Controller
     }
 
     /**
-     * Get vacation calendar
+     * Calendário corporativo: todas as férias aprovadas que interceptam o período [start_date, end_date].
+     * Visível para qualquer usuário autenticado (planejamento da equipe).
      */
     public function calendar(Request $request): JsonResponse
     {
-        $startDate = $request->input('start_date', now()->startOfMonth());
-        $endDate = $request->input('end_date', now()->endOfMonth());
+        $validated = $request->validate([
+            'start_date' => ['required', 'date'],
+            'end_date' => ['required', 'date', 'after_or_equal:start_date'],
+        ]);
 
-        $vacations = VacationRequest::where('status', 'approved')
-            ->whereBetween('start_date', [$startDate, $endDate])
-            ->orWhereBetween('end_date', [$startDate, $endDate])
-            ->with('user')
+        $startDate = $validated['start_date'];
+        $endDate = $validated['end_date'];
+
+        // Sobreposição: intervalo da solicitação [start_date, end_date] ∩ período pedido ≠ ∅
+        $vacations = VacationRequest::query()
+            ->where('status', 'approved')
+            ->whereDate('start_date', '<=', $endDate)
+            ->whereDate('end_date', '>=', $startDate)
+            ->with(['user:id,name,email'])
+            ->orderBy('start_date')
             ->get();
 
         return response()->json([

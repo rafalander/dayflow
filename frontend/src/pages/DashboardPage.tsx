@@ -1,5 +1,6 @@
 import { useMemo } from 'react'
 import { useVacationRequests } from '@/hooks'
+import TeamVacationCalendar from '@/components/TeamVacationCalendar'
 import type { VacationRequest } from '@/types'
 
 export default function DashboardPage() {
@@ -36,10 +37,12 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       <div>
         <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
-        <p className="mt-2 text-gray-600">Visão geral das suas solicitações de férias</p>
+        <p className="mt-2 text-gray-600">
+          Visão geral das suas solicitações e calendário da equipe — férias aprovadas visíveis para todos.
+        </p>
       </div>
 
       <div className="grid grid-cols-1 gap-6 md:grid-cols-4">
@@ -56,10 +59,12 @@ export default function DashboardPage() {
         ))}
       </div>
 
+      <TeamVacationCalendar />
+
       <div className="rounded-lg bg-white p-6 shadow">
-        <h2 className="mb-4 text-xl font-bold text-gray-900">Próximas férias (aprovadas)</h2>
+        <h2 className="mb-4 text-xl font-bold text-gray-900">Suas próximas férias (aprovadas)</h2>
         {upcoming.length === 0 ? (
-          <p className="text-gray-500">Nenhuma férias aprovada futura nesta página.</p>
+          <p className="text-gray-500">Nenhuma férias aprovada futura nesta listagem.</p>
         ) : (
           <ul className="divide-y divide-gray-100">
             {upcoming.map((v) => (

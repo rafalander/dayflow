@@ -1,0 +1,205 @@
+import { useMemo, useState } from 'react'
+import { useQuery } from '@tanstack/react-query'
+import {
+  addMonths,
+  eachDayOfInterval,
+  endOfMonth,
+  endOfWeek,
+  format,
+  isSameMonth,
+  isToday,
+  startOfMonth,
+  startOfWeek,
+} from 'date-fns'
+import { ptBR } from 'date-fns/locale'
+import { ChevronLeft, ChevronRight } from 'lucide-react'
+import { vacationService } from '@/services'
+import type { VacationRequest } from '@/types'
+
+const WEEKDAYS = ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom']
+
+function dayInVacation(dayIso: string, v: VacationRequest): boolean {
+  return v.start_date <= dayIso && v.end_date >= dayIso
+}
+
+function shortName(fullName: string): string {
+  const parts = fullName.trim().split(/\s+/)
+  if (parts.length <= 1) return parts[0]?.slice(0, 12) ?? '?'
+  return `${parts[0]} ${parts[parts.length - 1][0]}.`
+}
+
+function chipStyles(userId: number): { bg: string; text: string } {
+  const palette = [
+    { bg: 'bg-indigo-100', text: 'text-indigo-900' },
+    { bg: 'bg-violet-100', text: 'text-violet-900' },
+    { bg: 'bg-teal-100', text: 'text-teal-900' },
+    { bg: 'bg-amber-100', text: 'text-amber-900' },
+    { bg: 'bg-rose-100', text: 'text-rose-900' },
+    { bg: 'bg-sky-100', text: 'text-sky-900' },
+  ]
+  return palette[Math.abs(userId) % palette.length]
+}
+
+export default function TeamVacationCalendar() {
+  const [cursor, setCursor] = useState(() => startOfMonth(new Date()))
+
+  const { rangeStart, rangeEnd, gridStart, gridEnd } = useMemo(() => {
+    const monthStart = startOfMonth(cursor)
+    const monthEnd = endOfMonth(cursor)
+    const gStart = startOfWeek(monthStart, { weekStartsOn: 1 })
+    const gEnd = endOfWeek(monthEnd, { weekStartsOn: 1 })
+    return {
+      rangeStart: format(gStart, 'yyyy-MM-dd'),
+      rangeEnd: format(gEnd, 'yyyy-MM-dd'),
+      gridStart: gStart,
+      gridEnd: gEnd,
+    }
+  }, [cursor])
+
+  const { data: vacations = [], isPending, isError } = useQuery({
+    queryKey: ['vacation-calendar', rangeStart, rangeEnd],
+    queryFn: () => vacationService.getCalendar(rangeStart, rangeEnd),
+  })
+
+  const days = useMemo(
+    () => eachDayOfInterval({ start: gridStart, end: gridEnd }),
+    [gridStart, gridEnd],
+  )
+
+  const byDay = useMemo(() => {
+    const map = new Map<string, VacationRequest[]>()
+    for (const day of days) {
+      const iso = format(day, 'yyyy-MM-dd')
+      const list = vacations.filter((v) => dayInVacation(iso, v))
+      map.set(iso, list)
+    }
+    return map
+  }, [days, vacations])
+
+  return (
+    <section className="rounded-2xl border border-gray-200/90 bg-white p-5 shadow-sm ring-1 ring-black/[0.03] sm:p-6">
+      <div className="flex flex-col gap-2 border-b border-gray-100 pb-4 sm:flex-row sm:items-start sm:justify-between">
+        <div>
+          <h2 className="text-lg font-semibold text-gray-900">Calendário da equipe</h2>
+          <p className="mt-1 text-sm text-gray-500">
+            Férias aprovadas no período — visível para todos na empresa. Passe o mouse sobre um nome para ver o intervalo completo.
+          </p>
+        </div>
+        <div className="flex items-center gap-1 self-start rounded-lg border border-gray-200 bg-gray-50/80 p-0.5">
+          <button
+            type="button"
+            className="rounded-md p-2 text-gray-600 hover:bg-white hover:text-gray-900"
+            aria-label="Mês anterior"
+            onClick={() => setCursor((d) => addMonths(d, -1))}
+          >
+            <ChevronLeft size={18} />
+          </button>
+          <span className="min-w-[10rem] px-2 text-center text-sm font-semibold capitalize text-gray-800">
+            {format(cursor, 'MMMM yyyy', { locale: ptBR })}
+          </span>
+          <button
+            type="button"
+            className="rounded-md p-2 text-gray-600 hover:bg-white hover:text-gray-900"
+            aria-label="Próximo mês"
+            onClick={() => setCursor((d) => addMonths(d, 1))}
+          >
+            <ChevronRight size={18} />
+          </button>
+        </div>
+      </div>
+
+      {isPending && <p className="mt-6 text-sm text-gray-500">Carregando calendário…</p>}
+      {isError && (
+        <p className="mt-6 text-sm text-red-600">Não foi possível carregar as férias do período.</p>
+      )}
+
+      {!isPending && !isError && (
+        <>
+          <div className="mt-4 overflow-hidden rounded-xl border border-gray-200">
+            <div className="grid grid-cols-7 gap-px bg-gray-200">
+              {WEEKDAYS.map((w) => (
+                <div
+                  key={w}
+                  className="bg-gray-50 py-2 text-center text-xs font-semibold uppercase tracking-wide text-gray-500"
+                >
+                  {w}
+                </div>
+              ))}
+            {days.map((day) => {
+              const iso = format(day, 'yyyy-MM-dd')
+              const inMonth = isSameMonth(day, cursor)
+              const list = byDay.get(iso) ?? []
+              const today = isToday(day)
+
+              return (
+                <div
+                  key={iso}
+                  className={`flex min-h-[5.5rem] flex-col bg-white p-1.5 sm:min-h-[6.5rem] sm:p-2 ${
+                    !inMonth ? 'opacity-45' : ''
+                  } ${today ? 'ring-1 ring-inset ring-primary/40' : ''}`}
+                >
+                  <span
+                    className={`mb-1 text-right text-xs font-medium tabular-nums ${
+                      today ? 'text-primary' : inMonth ? 'text-gray-800' : 'text-gray-400'
+                    }`}
+                  >
+                    {format(day, 'd')}
+                  </span>
+                  <div className="flex min-h-0 flex-1 flex-col gap-0.5 overflow-hidden">
+                    {list.slice(0, 3).map((v) => {
+                      const u = v.user
+                      const label = u?.name ? shortName(u.name) : `#${v.user_id}`
+                      const { bg, text } = chipStyles(v.user_id)
+                      const title = u?.name
+                        ? `${u.name} — ${v.start_date} → ${v.end_date}`
+                        : `Férias ${v.start_date} → ${v.end_date}`
+                      return (
+                        <span
+                          key={`${v.id}-${iso}`}
+                          title={title}
+                          className={`truncate rounded px-1 py-0.5 text-[10px] font-medium leading-tight sm:text-[11px] ${bg} ${text}`}
+                        >
+                          {label}
+                        </span>
+                      )
+                    })}
+                    {list.length > 3 && (
+                      <span className="text-[10px] font-medium text-gray-500">+{list.length - 3}</span>
+                    )}
+                  </div>
+                </div>
+              )
+            })}
+            </div>
+          </div>
+
+          {vacations.length === 0 && (
+            <p className="mt-4 text-center text-sm text-gray-500">
+              Sem férias aprovadas neste período.
+            </p>
+          )}
+
+          {vacations.length > 0 && (
+            <div className="mt-6 rounded-xl border border-gray-100 bg-gray-50/60 p-4">
+              <h3 className="text-xs font-semibold uppercase tracking-wide text-gray-500">
+                Ausências no período da grade ({format(gridStart, 'dd/MM')} – {format(gridEnd, 'dd/MM/yyyy')})
+              </h3>
+              <ul className="mt-3 space-y-2 text-sm">
+                {[...vacations]
+                  .sort((a, b) => a.start_date.localeCompare(b.start_date))
+                  .map((v) => (
+                    <li key={v.id} className="flex flex-wrap items-baseline justify-between gap-2 border-b border-gray-100/80 pb-2 last:border-0 last:pb-0">
+                      <span className="font-medium text-gray-900">{v.user?.name ?? `Usuário #${v.user_id}`}</span>
+                      <span className="text-gray-600">
+                        {v.start_date} → {v.end_date}
+                      </span>
+                    </li>
+                  ))}
+              </ul>
+            </div>
+          )}
+        </>
+      )}
+    </section>
+  )
+}

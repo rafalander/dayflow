@@ -89,8 +89,8 @@ export const vacationService = {
     await api.delete(`/vacation-requests/${id}`)
   },
 
-  getCalendar: async (startDate: string, endDate: string) => {
-    const response = await api.get<ApiResponse<any>>('/vacation-requests/calendar', {
+  getCalendar: async (startDate: string, endDate: string): Promise<VacationRequest[]> => {
+    const response = await api.get<{ data: VacationRequest[]; status: string }>('/vacation-requests/calendar', {
       params: { start_date: startDate, end_date: endDate },
     })
     return response.data.data
