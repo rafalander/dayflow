@@ -99,7 +99,7 @@ class VacationRequestController extends Controller
             'approver_id' => $request->user()->manager_id,
             'start_date' => $validated['start_date'],
             'end_date' => $validated['end_date'],
-            'reason' => $validated['reason'],
+            'reason' => blank($validated['reason'] ?? null) ? null : $validated['reason'],
             'status' => 'pending',
         ]);
 

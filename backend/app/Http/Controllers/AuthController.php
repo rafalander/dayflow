@@ -47,7 +47,7 @@ class AuthController extends Controller
 
         $user->update(['last_login_at' => now()]);
         $token = $user->createToken('dev-login')->plainTextToken;
-        $user->load('role', 'manager');
+        $user->load('manager', 'cargo');
 
         return response()->json([
             'data' => [
@@ -88,7 +88,7 @@ class AuthController extends Controller
 
         $user->update(['last_login_at' => now()]);
         $token = $user->createToken('superadmin')->plainTextToken;
-        $user->load('role', 'manager');
+        $user->load('manager', 'cargo');
 
         return response()->json([
             'data' => [
@@ -136,17 +136,10 @@ class AuthController extends Controller
                         'email' => $googleUser->email,
                         'google_id' => $googleUser->id,
                         'avatar' => $googleUser->avatar,
+                        'role' => User::ROLE_USER,
+                        'level' => (int) config('dayflow.default_user_level', 20),
                         'is_active' => true,
                     ]);
-
-                    // Assign default role if needed
-                    if (!$user->role_id) {
-                        $defaultRole = \App\Models\Role::where('slug', 'user')->first();
-                        if ($defaultRole) {
-                            $user->role_id = $defaultRole->id;
-                            $user->save();
-                        }
-                    }
                 } else {
                     $user->update([
                         'google_id' => $googleUser->id,
@@ -192,7 +185,7 @@ class AuthController extends Controller
      */
     public function me(Request $request): JsonResponse
     {
-        $user = $request->user()->load('role', 'manager', 'subordinates');
+        $user = $request->user()->load('manager', 'subordinates', 'cargo');
 
         return response()->json([
             'data' => $user,

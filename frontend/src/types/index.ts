@@ -1,3 +1,16 @@
+export type UserRole = 'admin' | 'user';
+
+export interface Cargo {
+  id: number;
+  name: string;
+  slug: string;
+  description: string | null;
+  role: UserRole;
+  level: number;
+  created_at: string;
+  updated_at: string;
+}
+
 export interface User {
   id: number;
   name: string;
@@ -5,18 +18,21 @@ export interface User {
   avatar: string | null;
   custom_avatar: string | null;
   display_avatar: string | null;
-  role_id: number | null;
+  role: UserRole;
+  level: number;
+  cargo_id: number | null;
   manager_id: number | null;
   is_active: boolean;
   last_login_at: string | null;
   created_at: string;
   updated_at: string;
-  role?: Role;
+  cargo?: Cargo;
   manager?: User;
   subordinates?: User[];
   vacationRequests?: VacationRequest[];
 }
 
+/** Compatível com GET /roles (lista fixa para selects). */
 export interface Role {
   id: number;
   name: string;
@@ -26,8 +42,8 @@ export interface Role {
   permissions: string[] | null;
   description: string | null;
   is_admin: boolean;
-  created_at: string;
-  updated_at: string;
+  created_at?: string;
+  updated_at?: string;
 }
 
 /** Paginação no formato Laravel */

@@ -7,11 +7,11 @@ use Dedoc\Scramble\Support\Generator\SecurityScheme;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
 use App\Models\VacationRequest;
-use App\Models\Role;
 use App\Models\User;
+use App\Models\Cargo;
 use App\Policies\VacationRequestPolicy;
-use App\Policies\RolePolicy;
 use App\Policies\UserPolicy;
+use App\Policies\CargoPolicy;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -32,8 +32,8 @@ class AppServiceProvider extends ServiceProvider
 
         // Register policies
         Gate::policy(VacationRequest::class, VacationRequestPolicy::class);
-        Gate::policy(Role::class, RolePolicy::class);
         Gate::policy(User::class, UserPolicy::class);
+        Gate::policy(Cargo::class, CargoPolicy::class);
 
         // Configure Sanctum
         if (class_exists(\Laravel\Sanctum\Sanctum::class)) {

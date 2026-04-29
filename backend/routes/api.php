@@ -8,6 +8,7 @@ use App\Http\Controllers\VacationApprovalController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\SettingController;
+use App\Http\Controllers\CargoController;
 
 // Public routes
 Route::post('/auth/dev-login', [AuthController::class, 'devLogin'])->name('auth.dev-login');
@@ -22,7 +23,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/me', [AuthController::class, 'me']);
 
     // Users
-    Route::apiResource('users', UserController::class);
+    Route::apiResource('users', UserController::class)->only(['index', 'show', 'store', 'update']);
     Route::get('users/{user}/subordinates', [UserController::class, 'subordinates']);
     Route::get('organization/tree', [UserController::class, 'organizationTree']);
 
@@ -41,8 +42,11 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('reports/export-excel', [ReportController::class, 'exportExcel']);
     Route::get('reports/audit-logs', [ReportController::class, 'auditLogs']);
 
-    // Roles (Admin only)
-    Route::apiResource('roles', RoleController::class);
+    // Roles fixas (sem tabela) — compatível com selects do frontend
+    Route::get('roles', [RoleController::class, 'index']);
+
+    // Cargos — perfis de cargo vinculados a uma role (Admin only)
+    Route::apiResource('cargos', CargoController::class)->only(['index', 'store', 'update', 'destroy']);
 
     // Settings (Admin only)
     Route::get('settings', [SettingController::class, 'index']);

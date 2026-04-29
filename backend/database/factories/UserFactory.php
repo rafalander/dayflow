@@ -27,9 +27,11 @@ class UserFactory extends Factory
         return [
             'name' => fake()->name(),
             'email' => fake()->unique()->safeEmail(),
-            'email_verified_at' => now(),
+            'google_id' => 'manual-'.Str::uuid()->toString(),
             'password' => static::$password ??= Hash::make('password'),
-            'remember_token' => Str::random(10),
+            'role' => User::ROLE_USER,
+            'level' => 20,
+            'is_active' => true,
         ];
     }
 

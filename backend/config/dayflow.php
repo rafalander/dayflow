@@ -28,4 +28,13 @@ return [
         'password' => env('SUPERADMIN_PASSWORD', 'admin'),
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | Hierarquia (nível numérico em users.level)
+    |--------------------------------------------------------------------------
+    */
+    'superadmin_level' => (int) env('SUPERADMIN_LEVEL', 1000),
+
+    'default_user_level' => (int) env('DEFAULT_USER_LEVEL', 20),
+
 ];

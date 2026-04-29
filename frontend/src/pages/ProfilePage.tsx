@@ -1,7 +1,8 @@
 import type { ReactNode } from 'react'
 import type { LucideIcon } from 'lucide-react'
 import { useAuth } from '@/hooks'
-import { Loader, Mail, Briefcase, Shield, CalendarClock, CalendarDays } from 'lucide-react'
+import { formatDateBR, formatDateTimeBR } from '@/utils/date'
+import { Loader, Mail, Briefcase, Shield, CalendarClock, CalendarDays, Layers, Hash } from 'lucide-react'
 import UserAvatar from '@/components/UserAvatar'
 
 function InfoRow({
@@ -44,22 +45,12 @@ export default function ProfilePage() {
     )
   }
 
-  const roleName = user.role?.name ?? '—'
+  const roleName = user.role === 'admin' ? 'Administrador' : 'Usuário'
+  const cargoName = user.cargo?.name ?? '—'
 
-  const memberSince = user.created_at
-    ? new Date(user.created_at).toLocaleDateString('pt-BR', {
-        day: 'numeric',
-        month: 'long',
-        year: 'numeric',
-      })
-    : '—'
+  const memberSince = user.created_at ? formatDateBR(user.created_at) : '—'
 
-  const lastLogin = user.last_login_at
-    ? new Date(user.last_login_at).toLocaleString('pt-BR', {
-        dateStyle: 'short',
-        timeStyle: 'short',
-      })
-    : 'Nunca registrado'
+  const lastLogin = user.last_login_at ? formatDateTimeBR(user.last_login_at) : 'Nunca registrado'
 
   return (
     <div className="mx-auto max-w-3xl space-y-8">
@@ -95,7 +86,7 @@ export default function ProfilePage() {
               <span className="inline-flex items-center rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold text-primary">
                 {roleName}
               </span>
-              {user.role?.is_admin && (
+              {user.role === 'admin' && (
                 <span className="inline-flex items-center rounded-full bg-amber-50 px-2.5 py-1 text-xs font-medium text-amber-900 ring-1 ring-amber-200/90">
                   Administrador
                 </span>
@@ -117,7 +108,9 @@ export default function ProfilePage() {
         </div>
 
         <div className="mt-4 border-t border-gray-100 pt-2">
-          <InfoRow icon={Briefcase} label="Cargo / perfil" value={roleName} />
+          <InfoRow icon={Briefcase} label="Cargo" value={cargoName} />
+          <InfoRow icon={Layers} label="Perfil de acesso (role)" value={roleName} />
+          <InfoRow icon={Hash} label="Nível hierárquico" value={user.level} />
           <InfoRow icon={CalendarDays} label="Membro desde" value={memberSince} />
           <InfoRow icon={CalendarClock} label="Último acesso" value={lastLogin} />
         </div>

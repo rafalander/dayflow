@@ -1,5 +1,5 @@
 import api from './api'
-import { User, ApiResponse, LaravelPaginator, VacationRequest } from '@/types'
+import { User, UserRole, ApiResponse, LaravelPaginator, VacationRequest, Role, Cargo } from '@/types'
 
 export const authService = {
   getMe: async (): Promise<User> => {
@@ -34,9 +34,9 @@ export const authService = {
 }
 
 export const userService = {
-  getAll: async (page = 1, search = '') => {
+  getAll: async (page = 1, search = '', perPage = 15) => {
     const response = await api.get<ApiResponse<any>>('/users', {
-      params: { page, search },
+      params: { page, search, per_page: perPage },
     })
     return response.data.data
   },
@@ -46,7 +46,26 @@ export const userService = {
     return response.data.data
   },
 
-  update: async (id: number, data: Partial<User>) => {
+  create: async (data: {
+    name: string
+    email: string
+    password: string
+    role?: UserRole
+    level?: number
+    cargo_id?: number | null
+    manager_id?: number | null
+    is_active?: boolean
+  }) => {
+    const response = await api.post<ApiResponse<User>>('/users', data)
+    return response.data.data as User
+  },
+
+  update: async (
+    id: number,
+    data: Partial<
+      Pick<User, 'name' | 'email' | 'role' | 'level' | 'cargo_id' | 'manager_id' | 'is_active'> & { password?: string }
+    >,
+  ) => {
     const response = await api.put<ApiResponse<User>>(`/users/${id}`, data)
     return response.data.data
   },
@@ -59,6 +78,37 @@ export const userService = {
   getSubordinates: async (userId: number) => {
     const response = await api.get<ApiResponse<any>>(`/users/${userId}/subordinates`)
     return response.data.data
+  },
+}
+
+export const roleService = {
+  getAll: async (): Promise<Role[]> => {
+    const response = await api.get<{ data: Role[]; status: string }>('/roles')
+    return response.data.data
+  },
+}
+
+export const cargoService = {
+  getAll: async (): Promise<Cargo[]> => {
+    const response = await api.get<{ data: Cargo[]; status: string }>('/cargos')
+    return response.data.data
+  },
+
+  create: async (data: { name: string; description?: string | null; role: UserRole; level: number }) => {
+    const response = await api.post<ApiResponse<Cargo>>('/cargos', data)
+    return response.data.data as Cargo
+  },
+
+  update: async (
+    id: number,
+    data: Partial<{ name: string; description: string | null; role: UserRole; level: number }>,
+  ) => {
+    const response = await api.put<ApiResponse<Cargo>>(`/cargos/${id}`, data)
+    return response.data.data as Cargo
+  },
+
+  delete: async (id: number) => {
+    await api.delete(`/cargos/${id}`)
   },
 }
 

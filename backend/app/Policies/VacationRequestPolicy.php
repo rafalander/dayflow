@@ -7,47 +7,52 @@ use App\Models\VacationRequest;
 
 class VacationRequestPolicy
 {
-    /**
-     * Check if user can update vacation request
-     */
     public function update(User $user, VacationRequest $vacation): bool
     {
-        return $user->id === $vacation->user_id || $user->isAdmin();
+        if ($user->id === $vacation->user_id) {
+            return true;
+        }
+
+        return $user->role === 'admin' && $user->level > $vacation->user->level;
     }
 
-    /**
-     * Check if user can delete vacation request
-     */
     public function delete(User $user, VacationRequest $vacation): bool
     {
-        return $user->id === $vacation->user_id || $user->isAdmin();
+        if ($user->id === $vacation->user_id) {
+            return true;
+        }
+
+        return $user->role === 'admin' && $user->level > $vacation->user->level;
     }
 
-    /**
-     * Check if user can approve vacation request
-     */
     public function approve(User $user, VacationRequest $vacation): bool
     {
-        // Only approver or higher can approve
-        return $user->id === $vacation->approver_id || 
-               $user->isAdmin() || 
-               $this->isHierarchyAbove($user, $vacation->user);
+        if ($user->id === $vacation->approver_id) {
+            return true;
+        }
+
+        if ($user->role === 'admin' && $user->level > $vacation->user->level) {
+            return true;
+        }
+
+        return $this->isHierarchyAbove($user, $vacation->user);
     }
 
     private function isHierarchyAbove(User $checker, User $target): bool
     {
-        // Check if checker has a higher role weight
-        if ($checker->role?->weight > $target->role?->weight) {
+        if ($checker->level > $target->level) {
             return true;
         }
 
-        // Check if checker is in the hierarchy above target
         $current = $target;
-        while ($current->manager_id) {
+        $maxDepth = 10;
+
+        while ($current->manager_id && $maxDepth > 0) {
             if ($current->manager_id === $checker->id) {
                 return true;
             }
             $current = $current->manager;
+            $maxDepth--;
         }
 
         return false;

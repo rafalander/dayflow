@@ -35,7 +35,7 @@ class VacationApprovalController extends Controller
             'vacation_request_id' => $vacation->id,
             'approver_id' => $request->user()->id,
             'action' => 'approved',
-            'comments' => $validated['comments'] ?? null,
+            'comment' => $validated['comments'] ?? null,
         ]);
 
         // Update vacation request
@@ -80,7 +80,7 @@ class VacationApprovalController extends Controller
             'vacation_request_id' => $vacation->id,
             'approver_id' => $request->user()->id,
             'action' => 'rejected',
-            'comments' => $validated['reason'],
+            'comment' => $validated['reason'],
         ]);
 
         // Update vacation request

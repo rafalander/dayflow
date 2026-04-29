@@ -1,6 +1,7 @@
 import { useMemo } from 'react'
 import { useVacationRequests } from '@/hooks'
 import TeamVacationCalendar from '@/components/TeamVacationCalendar'
+import { formatDateBR, toIsoDateKey } from '@/utils/date'
 import type { VacationRequest } from '@/types'
 
 export default function DashboardPage() {
@@ -23,8 +24,8 @@ export default function DashboardPage() {
     const rows: VacationRequest[] = paginator?.data ?? []
     const today = new Date().toISOString().slice(0, 10)
     return rows
-      .filter((r) => r.status === 'approved' && r.start_date >= today)
-      .sort((a, b) => a.start_date.localeCompare(b.start_date))
+      .filter((r) => r.status === 'approved' && toIsoDateKey(r.start_date) >= today)
+      .sort((a, b) => toIsoDateKey(a.start_date).localeCompare(toIsoDateKey(b.start_date)))
       .slice(0, 8)
   }, [paginator])
 
@@ -70,7 +71,7 @@ export default function DashboardPage() {
             {upcoming.map((v) => (
               <li key={v.id} className="flex justify-between py-3 text-sm">
                 <span className="text-gray-800">
-                  {v.start_date} → {v.end_date}
+                  {formatDateBR(v.start_date)} → {formatDateBR(v.end_date)}
                 </span>
                 <span className="text-gray-500">#{v.id}</span>
               </li>

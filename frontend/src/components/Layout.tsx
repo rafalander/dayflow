@@ -1,6 +1,6 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { Outlet, useNavigate, useLocation } from 'react-router-dom'
-import { Menu, X, LogOut, Calendar, CheckCircle, BarChart3 } from 'lucide-react'
+import { Menu, X, LogOut, Calendar, CheckCircle, BarChart3, Users, Briefcase } from 'lucide-react'
 import UserAvatar from '@/components/UserAvatar'
 import { useAuthStore } from '@/store/authStore'
 import { useAuth } from '@/hooks'
@@ -16,7 +16,6 @@ function BrandWordmark({ collapsed }: { collapsed: boolean }) {
   return (
     <div className="min-w-0">
       <p className="font-bold leading-tight text-primary text-lg">Dayflow</p>
-      <p className="mt-0.5 text-xs text-gray-500">Gestão de Férias</p>
     </div>
   )
 }
@@ -30,12 +29,21 @@ export default function Layout() {
 
   const user = meQuery.data
 
-  const menuItems = [
-    { label: 'Dashboard', path: '/dashboard', icon: BarChart3 },
-    { label: 'Férias', path: '/vacations', icon: Calendar },
-    { label: 'Aprovações', path: '/approvals', icon: CheckCircle },
-    { label: 'Relatórios', path: '/reports', icon: BarChart3 },
-  ]
+  const menuItems = useMemo(() => {
+    const base: { label: string; path: string; icon: typeof BarChart3 }[] = [
+      { label: 'Dashboard', path: '/dashboard', icon: BarChart3 },
+      { label: 'Férias', path: '/vacations', icon: Calendar },
+      { label: 'Aprovações', path: '/approvals', icon: CheckCircle },
+      { label: 'Relatórios', path: '/reports', icon: BarChart3 },
+    ]
+    if (user?.role === 'admin') {
+      base.push(
+        { label: 'Usuários', path: '/users', icon: Users },
+        { label: 'Cargos', path: '/cargos', icon: Briefcase },
+      )
+    }
+    return base
+  }, [user?.role])
 
   const handleLogout = async () => {
     try {
@@ -121,7 +129,9 @@ export default function Layout() {
                   <UserAvatar name={user.name} src={user.display_avatar} size="sm" />
                   <div className="min-w-0">
                     <p className="truncate font-medium text-gray-800">{user.name}</p>
-                    <p className="truncate text-sm text-gray-500">{user.role?.name || 'User'}</p>
+                    <p className="truncate text-sm text-gray-500">
+                      {user.role === 'admin' ? 'Admin' : 'Usuário'} · nv {user.level}
+                    </p>
                   </div>
                 </button>
               )}

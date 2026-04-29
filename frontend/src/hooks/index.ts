@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { authService, userService, vacationService, reportService } from '@/services'
+import { authService, userService, vacationService, reportService, roleService, cargoService } from '@/services'
+import type { User } from '@/types'
 import toast from 'react-hot-toast'
 
 export const useAuth = () => {
@@ -22,10 +23,74 @@ export const useAuth = () => {
   return { meQuery, logoutMutation }
 }
 
-export const useUsers = (page = 1, search = '') => {
+export const useUsers = (page = 1, search = '', enabled = true, perPage = 15) => {
   return useQuery({
-    queryKey: ['users', page, search],
-    queryFn: () => userService.getAll(page, search),
+    queryKey: ['users', page, search, perPage],
+    queryFn: () => userService.getAll(page, search, perPage),
+    enabled,
+  })
+}
+
+/** Lista ampla para selects (gestor), só quando `enabled`. */
+export const useUserDirectory = (enabled: boolean) => {
+  return useQuery({
+    queryKey: ['users', 'directory'],
+    queryFn: () => userService.getAll(1, '', 500),
+    enabled,
+  })
+}
+
+export const useRoles = (enabled = true) => {
+  return useQuery({
+    queryKey: ['roles'],
+    queryFn: roleService.getAll,
+    enabled,
+  })
+}
+
+export const useCargos = (enabled = true) => {
+  return useQuery({
+    queryKey: ['cargos'],
+    queryFn: cargoService.getAll,
+    enabled,
+  })
+}
+
+export const useCreateCargo = () => {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: cargoService.create,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['cargos'] })
+      toast.success('Cargo criado')
+    },
+    onError: () => toast.error('Não foi possível criar o cargo'),
+  })
+}
+
+export const useUpdateCargo = () => {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: ({ id, data }: { id: number; data: Parameters<typeof cargoService.update>[1] }) =>
+      cargoService.update(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['cargos'] })
+      queryClient.invalidateQueries({ queryKey: ['users'] })
+      toast.success('Cargo atualizado')
+    },
+    onError: () => toast.error('Não foi possível atualizar'),
+  })
+}
+
+export const useDeleteCargo = () => {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: cargoService.delete,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['cargos'] })
+      toast.success('Cargo removido')
+    },
+    onError: () => toast.error('Não foi possível remover'),
   })
 }
 
@@ -39,14 +104,35 @@ export const useUser = (id: number) => {
 export const useUpdateUser = () => {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: ({ id, data }: { id: number; data: any }) =>
+    mutationFn: ({ id, data }: { id: number; data: Parameters<typeof userService.update>[1] }) =>
       userService.update(id, data),
-    onSuccess: () => {
+    onSuccess: (_data, { id }) => {
       queryClient.invalidateQueries({ queryKey: ['users'] })
-      toast.success('User updated successfully')
+      queryClient.invalidateQueries({ queryKey: ['users', id] })
+      queryClient.invalidateQueries({ queryKey: ['users', 'directory'] })
+      const me = queryClient.getQueryData<User>(['auth', 'me'])
+      if (me?.id === id) {
+        queryClient.invalidateQueries({ queryKey: ['auth', 'me'] })
+      }
+      toast.success('Usuário atualizado')
     },
     onError: () => {
-      toast.error('Failed to update user')
+      toast.error('Não foi possível atualizar o usuário')
+    },
+  })
+}
+
+export const useCreateUser = () => {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: userService.create,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['users'] })
+      queryClient.invalidateQueries({ queryKey: ['users', 'directory'] })
+      toast.success('Usuário criado')
+    },
+    onError: () => {
+      toast.error('Não foi possível criar o usuário')
     },
   })
 }

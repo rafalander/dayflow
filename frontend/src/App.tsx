@@ -12,6 +12,9 @@ import ApprovalsPage from '@/pages/ApprovalsPage'
 import ReportsPage from '@/pages/ReportsPage'
 import ProfilePage from '@/pages/ProfilePage'
 import AuthErrorPage from '@/pages/AuthErrorPage'
+import AdminOnly from '@/components/AdminOnly'
+import UsersPage from '@/pages/UsersPage'
+import CargosPage from '@/pages/CargosPage'
 
 export default function App() {
   return (
@@ -32,6 +35,22 @@ export default function App() {
               <Route path="/approvals" element={<ApprovalsPage />} />
               <Route path="/reports" element={<ReportsPage />} />
               <Route path="/profile" element={<ProfilePage />} />
+              <Route
+                path="/users"
+                element={
+                  <AdminOnly>
+                    <UsersPage />
+                  </AdminOnly>
+                }
+              />
+              <Route
+                path="/cargos"
+                element={
+                  <AdminOnly>
+                    <CargosPage />
+                  </AdminOnly>
+                }
+              />
             </Route>
           </Route>
 

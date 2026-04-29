@@ -3,23 +3,51 @@
 namespace App\Policies;
 
 use App\Models\User;
+use App\Support\UserHierarchy;
 
 class UserPolicy
 {
     /**
-     * Check if user can update another user
+     * Lista global de utilizadores — apenas administradores (role admin).
      */
-    public function update(User $user, User $target): bool
+    public function viewAny(User $user): bool
     {
-        // Users can only update themselves, admins can update anyone
-        return $user->id === $target->id || $user->isAdmin();
+        return UserHierarchy::isAdmin($user);
     }
 
     /**
-     * Check if user has admin access
+     * Ver detalhes de outro utilizador (hierarquia ou próprio perfil).
+     */
+    public function view(User $user, User $target): bool
+    {
+        return UserHierarchy::canView($user, $target);
+    }
+
+    /**
+     * Criar utilizador — apenas admin.
+     */
+    public function create(User $user): bool
+    {
+        return UserHierarchy::isAdmin($user);
+    }
+
+    /**
+     * Atualizar utilizador — próprio perfil ou admin acima na hierarquia.
+     */
+    public function update(User $user, User $target): bool
+    {
+        if ($user->id === $target->id) {
+            return true;
+        }
+
+        return UserHierarchy::canManage($user, $target);
+    }
+
+    /**
+     * Operações administrativas amplas (settings, etc.).
      */
     public function admin(User $user): bool
     {
-        return $user->isAdmin();
+        return UserHierarchy::isAdmin($user);
     }
 }

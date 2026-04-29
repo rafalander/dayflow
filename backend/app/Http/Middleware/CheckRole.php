@@ -12,7 +12,7 @@ class CheckRole
     {
         $user = $request->user();
 
-        if (!$user || $user->role?->slug !== $role) {
+        if (! $user || $user->role !== $role) {
             return response()->json([
                 'message' => 'Unauthorized',
                 'status' => 'error',

@@ -3,6 +3,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query'
 import toast from 'react-hot-toast'
 import { useVacationRequests, useCreateVacation } from '@/hooks'
 import { vacationService } from '@/services'
+import { formatDateBR } from '@/utils/date'
 import type { VacationRequest } from '@/types'
 
 function addDays(isoDate: string, days: number): string {
@@ -37,11 +38,13 @@ export default function VacationsPage() {
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault()
     try {
-      await createMutation.mutateAsync({
+      const payload: { start_date: string; end_date: string; reason?: string } = {
         start_date: startDate,
         end_date: endDate,
-        reason: reason.trim() || undefined,
-      })
+      }
+      const r = reason.trim()
+      if (r) payload.reason = r
+      await createMutation.mutateAsync(payload)
       setModalOpen(false)
       setReason('')
     } catch {
@@ -92,8 +95,8 @@ export default function VacationsPage() {
             )}
             {rows.map((v) => (
               <tr key={v.id} className="border-t">
-                <td className="px-6 py-3 text-sm">{v.start_date}</td>
-                <td className="px-6 py-3 text-sm">{v.end_date}</td>
+                <td className="px-6 py-3 text-sm">{formatDateBR(v.start_date)}</td>
+                <td className="px-6 py-3 text-sm">{formatDateBR(v.end_date)}</td>
                 <td className="px-6 py-3 text-sm">{statusLabel[v.status] ?? v.status}</td>
                 <td className="px-6 py-3 text-sm">
                   {v.status === 'pending' && (

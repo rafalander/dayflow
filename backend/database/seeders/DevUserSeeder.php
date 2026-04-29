@@ -2,7 +2,6 @@
 
 namespace Database\Seeders;
 
-use App\Models\Role;
 use App\Models\User;
 use Illuminate\Database\Seeder;
 
@@ -14,8 +13,6 @@ class DevUserSeeder extends Seeder
             return;
         }
 
-        $adminRole = Role::where('slug', 'admin')->first();
-
         User::updateOrCreate(
             ['email' => 'dev@uello.com.br'],
             [
@@ -23,7 +20,8 @@ class DevUserSeeder extends Seeder
                 'google_id' => 'local-dev-dayflow',
                 'password' => 'password',
                 'avatar' => null,
-                'role_id' => $adminRole?->id,
+                'role' => User::ROLE_ADMIN,
+                'level' => 500,
                 'is_active' => true,
             ]
         );

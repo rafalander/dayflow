@@ -14,12 +14,15 @@ import {
 import { ptBR } from 'date-fns/locale'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 import { vacationService } from '@/services'
+import { formatDateBR, toIsoDateKey } from '@/utils/date'
 import type { VacationRequest } from '@/types'
 
 const WEEKDAYS = ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom']
 
 function dayInVacation(dayIso: string, v: VacationRequest): boolean {
-  return v.start_date <= dayIso && v.end_date >= dayIso
+  const start = toIsoDateKey(v.start_date)
+  const end = toIsoDateKey(v.end_date)
+  return start <= dayIso && end >= dayIso
 }
 
 function shortName(fullName: string): string {
@@ -151,8 +154,8 @@ export default function TeamVacationCalendar() {
                       const label = u?.name ? shortName(u.name) : `#${v.user_id}`
                       const { bg, text } = chipStyles(v.user_id)
                       const title = u?.name
-                        ? `${u.name} — ${v.start_date} → ${v.end_date}`
-                        : `Férias ${v.start_date} → ${v.end_date}`
+                        ? `${u.name} — ${formatDateBR(v.start_date)} → ${formatDateBR(v.end_date)}`
+                        : `Férias ${formatDateBR(v.start_date)} → ${formatDateBR(v.end_date)}`
                       return (
                         <span
                           key={`${v.id}-${iso}`}
@@ -186,12 +189,14 @@ export default function TeamVacationCalendar() {
               </h3>
               <ul className="mt-3 space-y-2 text-sm">
                 {[...vacations]
-                  .sort((a, b) => a.start_date.localeCompare(b.start_date))
+                  .sort((a, b) =>
+                    toIsoDateKey(a.start_date).localeCompare(toIsoDateKey(b.start_date)),
+                  )
                   .map((v) => (
                     <li key={v.id} className="flex flex-wrap items-baseline justify-between gap-2 border-b border-gray-100/80 pb-2 last:border-0 last:pb-0">
                       <span className="font-medium text-gray-900">{v.user?.name ?? `Usuário #${v.user_id}`}</span>
                       <span className="text-gray-600">
-                        {v.start_date} → {v.end_date}
+                        {formatDateBR(v.start_date)} → {formatDateBR(v.end_date)}
                       </span>
                     </li>
                   ))}

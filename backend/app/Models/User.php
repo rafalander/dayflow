@@ -13,6 +13,10 @@ class User extends Authenticatable
 {
     use HasApiTokens, HasFactory, Notifiable;
 
+    public const ROLE_ADMIN = 'admin';
+
+    public const ROLE_USER = 'user';
+
     protected $fillable = [
         'name',
         'email',
@@ -20,7 +24,9 @@ class User extends Authenticatable
         'google_id',
         'avatar',
         'custom_avatar',
-        'role_id',
+        'role',
+        'level',
+        'cargo_id',
         'manager_id',
         'is_active',
         'last_login_at',
@@ -36,15 +42,16 @@ class User extends Authenticatable
         'is_active' => 'boolean',
         'last_login_at' => 'datetime',
         'password' => 'hashed',
+        'level' => 'integer',
     ];
 
     protected $appends = ['display_avatar'];
 
     // ─── Relationships ───────────────────────────
 
-    public function role(): BelongsTo
+    public function cargo(): BelongsTo
     {
-        return $this->belongsTo(Role::class);
+        return $this->belongsTo(Cargo::class);
     }
 
     public function manager(): BelongsTo
@@ -75,7 +82,7 @@ class User extends Authenticatable
     public function getDisplayAvatarAttribute(): ?string
     {
         if ($this->custom_avatar) {
-            return asset('storage/' . $this->custom_avatar);
+            return asset('storage/'.$this->custom_avatar);
         }
 
         return $this->avatar;
@@ -83,20 +90,17 @@ class User extends Authenticatable
 
     // ─── Authorization Helpers ───────────────────
 
-    /**
-     * Check if user is admin.
-     */
     public function isAdmin(): bool
     {
-        return $this->role?->is_admin ?? false;
+        return $this->role === self::ROLE_ADMIN;
     }
 
     /**
-     * Check if user has a specific permission through their role.
+     * Compatibilidade: permissões granulares via cargo/role — apenas admin tem poder administrativo base.
      */
     public function hasPermission(string $permission): bool
     {
-        return $this->role?->hasPermission($permission) ?? false;
+        return $this->isAdmin();
     }
 
     /**
@@ -125,6 +129,7 @@ class User extends Authenticatable
     {
         $ids = [];
         $this->collectSubordinateIds($ids);
+
         return $ids;
     }
 
@@ -141,7 +146,7 @@ class User extends Authenticatable
      */
     public function getTeamMembers()
     {
-        if (!$this->manager_id) {
+        if (! $this->manager_id) {
             return collect();
         }
 

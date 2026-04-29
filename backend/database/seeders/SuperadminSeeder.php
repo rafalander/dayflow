@@ -2,7 +2,6 @@
 
 namespace Database\Seeders;
 
-use App\Models\Role;
 use App\Models\User;
 use Illuminate\Database\Seeder;
 
@@ -10,8 +9,6 @@ class SuperadminSeeder extends Seeder
 {
     public function run(): void
     {
-        $adminRole = Role::where('slug', 'admin')->first();
-
         User::updateOrCreate(
             ['email' => config('dayflow.superadmin.email')],
             [
@@ -19,7 +16,8 @@ class SuperadminSeeder extends Seeder
                 'google_id' => 'superadmin-dayflow-internal',
                 'password' => config('dayflow.superadmin.password'),
                 'avatar' => null,
-                'role_id' => $adminRole?->id,
+                'role' => User::ROLE_ADMIN,
+                'level' => config('dayflow.superadmin_level', 1000),
                 'is_active' => true,
             ]
         );

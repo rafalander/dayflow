@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { usePendingApprovals, useApproveVacation, useRejectVacation } from '@/hooks'
+import { formatDateBR } from '@/utils/date'
 import type { VacationRequest } from '@/types'
 
 export default function ApprovalsPage() {
@@ -54,8 +55,8 @@ export default function ApprovalsPage() {
             {rows.map((v) => (
               <tr key={v.id} className="border-t">
                 <td className="px-6 py-3 text-sm">{v.user?.name ?? `Usuário #${v.user_id}`}</td>
-                <td className="px-6 py-3 text-sm">{v.start_date}</td>
-                <td className="px-6 py-3 text-sm">{v.end_date}</td>
+                <td className="px-6 py-3 text-sm">{formatDateBR(v.start_date)}</td>
+                <td className="px-6 py-3 text-sm">{formatDateBR(v.end_date)}</td>
                 <td className="space-x-2 px-6 py-3 text-sm">
                   <button
                     type="button"
