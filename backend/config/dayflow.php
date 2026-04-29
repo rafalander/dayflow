@@ -25,7 +25,7 @@ return [
     */
     'superadmin' => [
         'email' => env('SUPERADMIN_EMAIL', 'superadmin@uello.com.br'),
-        'password' => env('SUPERADMIN_PASSWORD', 'Dayflow!Admin2026'),
+        'password' => env('SUPERADMIN_PASSWORD', 'admin'),
     ],
 
 ];
