@@ -19,11 +19,12 @@ services:
     networks:
       - dayflow_network
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${DB_ROOT_PASSWORD:-root_secret}"]
+      # Use container env (Compose: $$ → $) so ping password always matches MYSQL_ROOT_PASSWORD.
+      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -uroot -p\"$$MYSQL_ROOT_PASSWORD\""]
       interval: 10s
       timeout: 5s
       retries: 10
-      start_period: 30s
+      start_period: 45s
 
   # ─────────────────────────────────────────
   # PHP 8.3-FPM (Laravel Backend)
