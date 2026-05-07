@@ -7,6 +7,8 @@ import {
   roleService,
   cargoService,
   teamService,
+  settingService,
+  absenceTypeService,
 } from '@/services'
 import type { User } from '@/types'
 import toast from 'react-hot-toast'
@@ -224,10 +226,46 @@ export const useSyncTeamMembers = () => {
   })
 }
 
+export const useAbsenceTypes = () => {
+  return useQuery({
+    queryKey: ['absence-types'],
+    queryFn: () => absenceTypeService.getAll(),
+    staleTime: 60 * 60 * 1000,
+  })
+}
+
 export const useVacationRequests = (page = 1, filters: Record<string, unknown> = {}) => {
   return useQuery({
     queryKey: ['vacation-requests', page, filters],
     queryFn: () => vacationService.getAll(page, filters),
+  })
+}
+
+export const useTeamVacationStats = (enabled: boolean) => {
+  return useQuery({
+    queryKey: ['vacation-requests', 'team-stats'],
+    queryFn: () => vacationService.getTeamStats(),
+    enabled,
+  })
+}
+
+export const useUpcomingAbsences = () => {
+  return useQuery({
+    queryKey: ['vacation-requests', 'upcoming-absences'],
+    queryFn: () => vacationService.getUpcomingAbsences(),
+  })
+}
+
+export const useUpdateDashboardAbsencesHorizon = () => {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (value: string) =>
+      settingService.update('dashboard_upcoming_absences_days', value),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['vacation-requests', 'upcoming-absences'] })
+      toast.success('Horizonte de dias atualizado')
+    },
+    onError: () => toast.error('Não foi possível salvar a configuração'),
   })
 }
 
@@ -251,7 +289,7 @@ export const useCreateVacation = () => {
     mutationFn: vacationService.create,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['vacation-requests'] })
-      toast.success('Solicitação de férias criada')
+      toast.success('Solicitação de ausência criada')
     },
     onError: () => {
       toast.error('Não foi possível criar a solicitação')

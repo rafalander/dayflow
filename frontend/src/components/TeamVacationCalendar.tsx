@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useMemo, useRef, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import {
   addMonths,
@@ -13,6 +13,8 @@ import {
 } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
+import { useAbsenceTypes } from '@/hooks'
+import { absenceTypeLabel } from '@/lib/absenceTypes'
 import { vacationService } from '@/services'
 import { formatDateBR, toIsoDateKey } from '@/utils/date'
 import type { VacationRequest } from '@/types'
@@ -44,7 +46,23 @@ function chipStyles(userId: number): { bg: string; text: string } {
 }
 
 export default function TeamVacationCalendar() {
+  const { data: absenceTypes = [] } = useAbsenceTypes()
+  const monthInputRef = useRef<HTMLInputElement>(null)
   const [cursor, setCursor] = useState(() => startOfMonth(new Date()))
+
+  function openMonthPicker() {
+    const el = monthInputRef.current
+    if (!el) return
+    if (typeof el.showPicker !== 'function') {
+      el.click()
+      return
+    }
+    try {
+      void Promise.resolve(el.showPicker()).catch(() => el.click())
+    } catch {
+      el.click()
+    }
+  }
 
   const { rangeStart, rangeEnd, gridStart, gridEnd } = useMemo(() => {
     const monthStart = startOfMonth(cursor)
@@ -85,35 +103,60 @@ export default function TeamVacationCalendar() {
         <div>
           <h2 className="text-lg font-semibold text-gray-900">Calendário da equipe</h2>
           <p className="mt-1 text-sm text-gray-500">
-            Férias aprovadas no período — visível para todos na empresa. Passe o mouse sobre um nome para ver o intervalo completo.
+            Ausências aprovadas no período — visível para todos na empresa. Passe o mouse sobre um nome para ver tipo e intervalo.
           </p>
         </div>
-        <div className="flex items-center gap-1 self-start rounded-lg border border-gray-200 bg-gray-50/80 p-0.5">
-          <button
-            type="button"
-            className="rounded-md p-2 text-gray-600 hover:bg-white hover:text-gray-900"
-            aria-label="Mês anterior"
-            onClick={() => setCursor((d) => addMonths(d, -1))}
-          >
-            <ChevronLeft size={18} />
-          </button>
-          <span className="min-w-[10rem] px-2 text-center text-sm font-semibold capitalize text-gray-800">
-            {format(cursor, 'MMMM yyyy', { locale: ptBR })}
-          </span>
-          <button
-            type="button"
-            className="rounded-md p-2 text-gray-600 hover:bg-white hover:text-gray-900"
-            aria-label="Próximo mês"
-            onClick={() => setCursor((d) => addMonths(d, 1))}
-          >
-            <ChevronRight size={18} />
-          </button>
+        <div className="flex flex-wrap items-center gap-2 self-start">
+          <div className="flex items-center gap-0 rounded-lg border border-gray-200 bg-gray-50/80 p-0.5">
+            <button
+              type="button"
+              className="rounded-md p-2 text-gray-600 hover:bg-white hover:text-gray-900"
+              aria-label="Mês anterior"
+              onClick={() => setCursor((d) => addMonths(d, -1))}
+            >
+              <ChevronLeft size={18} />
+            </button>
+            <div className="relative flex min-h-[2.25rem] min-w-[11rem] items-center justify-center">
+              <input
+                ref={monthInputRef}
+                type="month"
+                lang="pt-BR"
+                value={format(cursor, 'yyyy-MM')}
+                onChange={(e) => {
+                  const v = e.target.value
+                  if (!v) return
+                  const [y, mo] = v.split('-').map(Number)
+                  if (!Number.isFinite(y) || !Number.isFinite(mo)) return
+                  setCursor(startOfMonth(new Date(y, mo - 1, 1)))
+                }}
+                className="sr-only"
+                tabIndex={-1}
+                aria-hidden
+              />
+              <button
+                type="button"
+                title="Clique para escolher o mês"
+                className="rounded-md px-2 py-1.5 text-sm font-semibold capitalize text-gray-800 transition-colors hover:bg-white hover:text-primary focus:outline-none focus-visible:bg-white focus-visible:ring-2 focus-visible:ring-primary/30"
+                onClick={openMonthPicker}
+              >
+                {format(cursor, 'MMMM yyyy', { locale: ptBR })}
+              </button>
+            </div>
+            <button
+              type="button"
+              className="rounded-md p-2 text-gray-600 hover:bg-white hover:text-gray-900"
+              aria-label="Próximo mês"
+              onClick={() => setCursor((d) => addMonths(d, 1))}
+            >
+              <ChevronRight size={18} />
+            </button>
+          </div>
         </div>
       </div>
 
       {isPending && <p className="mt-6 text-sm text-gray-500">Carregando calendário…</p>}
       {isError && (
-        <p className="mt-6 text-sm text-red-600">Não foi possível carregar as férias do período.</p>
+        <p className="mt-6 text-sm text-red-600">Não foi possível carregar as ausências do período.</p>
       )}
 
       {!isPending && !isError && (
@@ -153,9 +196,10 @@ export default function TeamVacationCalendar() {
                       const u = v.user
                       const label = u?.name ? shortName(u.name) : `#${v.user_id}`
                       const { bg, text } = chipStyles(v.user_id)
+                      const typeL = absenceTypeLabel(v, absenceTypes)
                       const title = u?.name
-                        ? `${u.name} — ${formatDateBR(v.start_date)} → ${formatDateBR(v.end_date)}`
-                        : `Férias ${formatDateBR(v.start_date)} → ${formatDateBR(v.end_date)}`
+                        ? `${u.name} — ${typeL} — ${formatDateBR(v.start_date)} → ${formatDateBR(v.end_date)}`
+                        : `${typeL} — ${formatDateBR(v.start_date)} → ${formatDateBR(v.end_date)}`
                       return (
                         <span
                           key={`${v.id}-${iso}`}
@@ -178,7 +222,7 @@ export default function TeamVacationCalendar() {
 
           {vacations.length === 0 && (
             <p className="mt-4 text-center text-sm text-gray-500">
-              Sem férias aprovadas neste período.
+              Sem ausências aprovadas neste período.
             </p>
           )}
 
@@ -196,7 +240,8 @@ export default function TeamVacationCalendar() {
                     <li key={v.id} className="flex flex-wrap items-baseline justify-between gap-2 border-b border-gray-100/80 pb-2 last:border-0 last:pb-0">
                       <span className="font-medium text-gray-900">{v.user?.name ?? `Usuário #${v.user_id}`}</span>
                       <span className="text-gray-600">
-                        {formatDateBR(v.start_date)} → {formatDateBR(v.end_date)}
+                        {absenceTypeLabel(v, absenceTypes)} · {formatDateBR(v.start_date)} →{' '}
+                        {formatDateBR(v.end_date)}
                       </span>
                     </li>
                   ))}

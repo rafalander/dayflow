@@ -33,7 +33,8 @@ export default function App() {
             <Route element={<Layout />}>
               <Route index element={<Navigate to="/dashboard" replace />} />
               <Route path="/dashboard" element={<DashboardPage />} />
-              <Route path="/vacations" element={<VacationsPage />} />
+              <Route path="/ausencias" element={<VacationsPage />} />
+              <Route path="/vacations" element={<Navigate to="/ausencias" replace />} />
               <Route path="/approvals" element={<ApprovalsPage />} />
               <Route path="/reports" element={<ReportsPage />} />
               <Route path="/profile" element={<ProfilePage />} />

@@ -47,7 +47,7 @@ export default function ReportsPage() {
   const handleExcel = async () => {
     try {
       const blob = await reportService.exportExcel(startDate, endDate)
-      downloadBlob(blob, `relatorio-ferias-${startDate}-${endDate}.csv`)
+      downloadBlob(blob, `relatorio-ausencias-${startDate}-${endDate}.csv`)
       toast.success('Download iniciado')
     } catch (e: unknown) {
       toast.error(e instanceof Error ? e.message : 'Falha ao exportar')
@@ -57,7 +57,7 @@ export default function ReportsPage() {
   const handlePdf = async () => {
     try {
       const blob = await reportService.exportPdf(startDate, endDate)
-      downloadBlob(blob, `relatorio-ferias-${startDate}-${endDate}.pdf`)
+      downloadBlob(blob, `relatorio-ausencias-${startDate}-${endDate}.pdf`)
       toast.success('Download iniciado')
     } catch (e: unknown) {
       toast.error(e instanceof Error ? e.message : 'PDF ainda não implementado no servidor')

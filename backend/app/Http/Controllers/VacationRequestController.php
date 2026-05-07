@@ -2,11 +2,15 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Setting;
 use App\Models\VacationRequest;
 use App\Models\User;
 use App\Services\VacationService;
-use Illuminate\Http\Request;
+use App\Support\AbsenceTypes;
+use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 
 class VacationRequestController extends Controller
 {
@@ -35,6 +39,10 @@ class VacationRequestController extends Controller
         }
         if ($request->has('end_date')) {
             $query->whereDate('end_date', '<=', $request->end_date);
+        }
+
+        if ($request->filled('absence_type')) {
+            $query->where('absence_type', $request->absence_type);
         }
 
         // Get only requests that user can see
@@ -74,6 +82,7 @@ class VacationRequestController extends Controller
         $validated = $request->validate([
             'start_date' => 'required|date|after_or_equal:today',
             'end_date' => 'required|date|after_or_equal:start_date',
+            'absence_type' => ['required', 'string', 'max:64', Rule::in(AbsenceTypes::slugs())],
             'reason' => 'nullable|string|max:500',
             'comments' => 'nullable|string',
         ]);
@@ -93,14 +102,20 @@ class VacationRequestController extends Controller
             ], 422);
         }
 
+        $start = Carbon::parse($validated['start_date']);
+        $end = Carbon::parse($validated['end_date']);
+        $businessDays = VacationRequest::calculateBusinessDays($start, $end);
+
         // Create vacation request
         $vacation = VacationRequest::create([
             'user_id' => $request->user()->id,
+            'absence_type' => $validated['absence_type'],
             'approver_id' => $request->user()->manager_id,
             'start_date' => $validated['start_date'],
             'end_date' => $validated['end_date'],
             'reason' => blank($validated['reason'] ?? null) ? null : $validated['reason'],
             'status' => 'pending',
+            'business_days' => $businessDays,
         ]);
 
         // Send notifications
@@ -131,10 +146,20 @@ class VacationRequestController extends Controller
         $validated = $request->validate([
             'start_date' => 'sometimes|date|after_or_equal:today',
             'end_date' => 'sometimes|date|after_or_equal:start_date',
+            'absence_type' => ['sometimes', 'string', 'max:64', Rule::in(AbsenceTypes::slugs())],
             'reason' => 'sometimes|nullable|string|max:500',
         ]);
 
-        $vacation_request->update($validated);
+        $vacation_request->fill($validated);
+
+        if ($vacation_request->isDirty(['start_date', 'end_date'])) {
+            $vacation_request->business_days = VacationRequest::calculateBusinessDays(
+                Carbon::parse($vacation_request->start_date),
+                Carbon::parse($vacation_request->end_date)
+            );
+        }
+
+        $vacation_request->save();
 
         return response()->json([
             'data' => $vacation_request,
@@ -161,6 +186,75 @@ class VacationRequestController extends Controller
 
         return response()->json([
             'message' => 'Vacation request deleted successfully',
+            'status' => 'success',
+        ]);
+    }
+
+    /**
+     * Contagens de solicitações (aprovadas / pendentes / recusadas / total) para o escopo do gestor.
+     * Admin: toda a organização (utilizadores ativos). Demais: apenas subordinados diretos.
+     */
+    public function teamStats(Request $request): JsonResponse
+    {
+        $auth = $request->user();
+
+        if (! $auth->canViewTeamVacationStats()) {
+            return response()->json([
+                'message' => 'Acesso negado.',
+                'status' => 'error',
+            ], 403);
+        }
+
+        if ($auth->isAdmin()) {
+            $userIds = User::query()->active()->pluck('id');
+        } else {
+            $userIds = $auth->subordinates()->pluck('id');
+        }
+
+        $base = VacationRequest::query()->whereIn('user_id', $userIds);
+
+        $approved = (clone $base)->where('status', 'approved')->count();
+        $pending = (clone $base)->where('status', 'pending')->count();
+        $rejected = (clone $base)->where('status', 'rejected')->count();
+        $total = (clone $base)->count();
+
+        return response()->json([
+            'data' => [
+                'approved' => $approved,
+                'pending' => $pending,
+                'rejected' => $rejected,
+                'total' => $total,
+            ],
+            'status' => 'success',
+        ]);
+    }
+
+    /**
+     * Próximas ausências (férias aprovadas) num horizonte configurável — visível a todos os autenticados.
+     */
+    public function upcomingAbsences(Request $request): JsonResponse
+    {
+        $rawDays = Setting::where('key', 'dashboard_upcoming_absences_days')->value('value');
+        $days = is_numeric($rawDays) ? (int) $rawDays : (int) config('dayflow.dashboard_upcoming_absences_days', 30);
+        $days = max(1, min($days, 366));
+
+        $today = now()->startOfDay();
+        $until = (clone $today)->addDays($days)->endOfDay();
+
+        $vacations = VacationRequest::query()
+            ->where('status', 'approved')
+            ->whereDate('start_date', '>=', $today->toDateString())
+            ->whereDate('start_date', '<=', $until->toDateString())
+            ->with(['user:id,name,email'])
+            ->orderBy('start_date')
+            ->orderBy('user_id')
+            ->get();
+
+        return response()->json([
+            'data' => $vacations,
+            'meta' => [
+                'days' => $days,
+            ],
             'status' => 'success',
         ]);
     }

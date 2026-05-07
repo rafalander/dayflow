@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Support\AbsenceTypes;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -13,6 +14,7 @@ class VacationRequest extends Model
 
     protected $fillable = [
         'user_id',
+        'absence_type',
         'approver_id',
         'start_date',
         'end_date',
@@ -27,6 +29,15 @@ class VacationRequest extends Model
         'end_date' => 'date',
         'business_days' => 'integer',
     ];
+
+    protected $appends = [
+        'absence_type_label',
+    ];
+
+    public function getAbsenceTypeLabelAttribute(): string
+    {
+        return AbsenceTypes::label((string) ($this->absence_type ?? 'vacation'));
+    }
 
     // ─── Relationships ───────────────────────────
 

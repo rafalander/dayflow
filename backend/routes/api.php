@@ -10,6 +10,7 @@ use App\Http\Controllers\RoleController;
 use App\Http\Controllers\SettingController;
 use App\Http\Controllers\CargoController;
 use App\Http\Controllers\TeamController;
+use App\Http\Controllers\AbsenceTypeController;
 
 // Public routes
 Route::post('/auth/dev-login', [AuthController::class, 'devLogin'])->name('auth.dev-login');
@@ -23,13 +24,17 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::get('/me', [AuthController::class, 'me']);
 
+    Route::get('absence-types', [AbsenceTypeController::class, 'index']);
+
     // Users
     Route::apiResource('users', UserController::class)->only(['index', 'show', 'store', 'update']);
     Route::get('users/{user}/subordinates', [UserController::class, 'subordinates']);
     Route::get('organization/tree', [UserController::class, 'organizationTree']);
 
-    // Vacation Requests (calendar antes do resource para não capturar "calendar" como id)
+    // Vacation Requests (rotas literais antes do resource)
     Route::get('vacation-requests/calendar', [VacationRequestController::class, 'calendar']);
+    Route::get('vacation-requests/team-stats', [VacationRequestController::class, 'teamStats']);
+    Route::get('vacation-requests/upcoming-absences', [VacationRequestController::class, 'upcomingAbsences']);
     Route::apiResource('vacation-requests', VacationRequestController::class);
 
     // Vacation Approvals

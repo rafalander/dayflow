@@ -32,7 +32,7 @@ class VacationRequestNotification extends Notification
             ->subject("New Vacation Request from {$this->vacation->user->name}")
             ->greeting("Hello {$notifiable->name},")
             ->line("{$this->vacation->user->name} has requested vacation from {$this->vacation->start_date->format('M d, Y')} to {$this->vacation->end_date->format('M d, Y')}.")
-            ->action('Review Request', url("/approvals/{$this->vacation->id}"))
+            ->action('Revisar solicitação', rtrim((string) env('FRONTEND_URL', 'http://localhost:5173'), '/').'/approvals')
             ->line('Thank you for using Dayflow!');
     }
 }

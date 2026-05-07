@@ -95,6 +95,16 @@ class User extends Authenticatable
         return \App\Support\UserHierarchy::isAdmin($this);
     }
 
+    /** Resumo de solicitações no dashboard: admin ou quem tem subordinados diretos. */
+    public function canViewTeamVacationStats(): bool
+    {
+        if ($this->isAdmin()) {
+            return true;
+        }
+
+        return $this->subordinates()->exists();
+    }
+
     /**
      * Compatibilidade: permissões amplas seguem isAdmin().
      */

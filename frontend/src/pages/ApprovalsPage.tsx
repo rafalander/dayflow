@@ -1,9 +1,11 @@
 import { useState } from 'react'
-import { usePendingApprovals, useApproveVacation, useRejectVacation } from '@/hooks'
+import { useAbsenceTypes, usePendingApprovals, useApproveVacation, useRejectVacation } from '@/hooks'
+import { absenceTypeLabel } from '@/lib/absenceTypes'
 import { formatDateBR } from '@/utils/date'
 import type { VacationRequest } from '@/types'
 
 export default function ApprovalsPage() {
+  const { data: absenceTypes = [] } = useAbsenceTypes()
   const { data: paginator, isPending, isError, refetch } = usePendingApprovals(1, 50)
   const approveMutation = useApproveVacation()
   const rejectMutation = useRejectVacation()
@@ -39,6 +41,7 @@ export default function ApprovalsPage() {
           <thead className="bg-gray-50">
             <tr>
               <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700">Solicitante</th>
+              <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700">Tipo</th>
               <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700">Início</th>
               <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700">Fim</th>
               <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700">Ações</th>
@@ -47,7 +50,7 @@ export default function ApprovalsPage() {
           <tbody>
             {rows.length === 0 && !isPending && (
               <tr>
-                <td colSpan={4} className="px-6 py-8 text-center text-gray-500">
+                <td colSpan={5} className="px-6 py-8 text-center text-gray-500">
                   Nenhuma aprovação pendente
                 </td>
               </tr>
@@ -55,6 +58,7 @@ export default function ApprovalsPage() {
             {rows.map((v) => (
               <tr key={v.id} className="border-t">
                 <td className="px-6 py-3 text-sm">{v.user?.name ?? `Usuário #${v.user_id}`}</td>
+                <td className="px-6 py-3 text-sm">{absenceTypeLabel(v, absenceTypes)}</td>
                 <td className="px-6 py-3 text-sm">{formatDateBR(v.start_date)}</td>
                 <td className="px-6 py-3 text-sm">{formatDateBR(v.end_date)}</td>
                 <td className="space-x-2 px-6 py-3 text-sm">

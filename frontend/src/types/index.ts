@@ -88,14 +88,21 @@ export interface LaravelPaginator<T> {
   to: number | null;
 }
 
+export interface AbsenceTypeOption {
+  slug: string;
+  label: string;
+}
+
 export interface VacationRequest {
   id: number;
   user_id: number;
+  absence_type?: string;
+  absence_type_label?: string;
   approver_id: number | null;
   start_date: string;
   end_date: string;
   reason: string | null;
-  status: 'pending' | 'approved' | 'rejected';
+  status: 'pending' | 'approved' | 'rejected' | 'cancelled';
   created_at: string;
   updated_at: string;
   user?: User;

@@ -33,7 +33,7 @@ class VacationResponseNotification extends Notification
             ->subject("Your Vacation Request has been {$status}")
             ->greeting("Hello {$notifiable->name},")
             ->line("Your vacation request for {$this->vacation->start_date->format('M d, Y')} to {$this->vacation->end_date->format('M d, Y')} has been {$this->action}.")
-            ->action('View Details', url("/vacations/{$this->vacation->id}"))
+            ->action('Ver detalhes', rtrim((string) env('FRONTEND_URL', 'http://localhost:5173'), '/').'/ausencias')
             ->line('Thank you for using Dayflow!');
     }
 }

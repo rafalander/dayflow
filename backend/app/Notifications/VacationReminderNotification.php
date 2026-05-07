@@ -33,6 +33,6 @@ class VacationReminderNotification extends Notification
             ->greeting("Hello {$notifiable->name},")
             ->line("Your vacation starts in {$days} days ({$this->vacation->start_date->format('M d, Y')}).")
             ->line('Have a great time!')
-            ->action('View Details', url("/vacations/{$this->vacation->id}"));
+            ->action('Ver detalhes', rtrim((string) env('FRONTEND_URL', 'http://localhost:5173'), '/').'/ausencias');
     }
 }

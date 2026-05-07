@@ -45,6 +45,11 @@ class SettingSeeder extends Seeder
                 'value' => 'Uello',
                 'description' => 'Organization name',
             ],
+            [
+                'key' => 'dashboard_upcoming_absences_days',
+                'value' => '30',
+                'description' => 'Horizonte (dias) para listar próximas ausências aprovadas no dashboard',
+            ],
         ];
 
         foreach ($settings as $setting) {

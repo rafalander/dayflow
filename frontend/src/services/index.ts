@@ -9,6 +9,8 @@ import {
   Cargo,
   Team,
   TeamDetailPayload,
+  Setting,
+  AbsenceTypeOption,
 } from '@/types'
 
 export const authService = {
@@ -152,6 +154,13 @@ export const teamService = {
   },
 }
 
+export const absenceTypeService = {
+  getAll: async (): Promise<AbsenceTypeOption[]> => {
+    const response = await api.get<ApiResponse<AbsenceTypeOption[]>>('/absence-types')
+    return response.data.data
+  },
+}
+
 export const vacationService = {
   getAll: async (page = 1, filters: Record<string, unknown> = {}) => {
     const response = await api.get<{ data: LaravelPaginator<VacationRequest>; status: string }>('/vacation-requests', {
@@ -165,8 +174,14 @@ export const vacationService = {
     return response.data.data
   },
 
-  create: async (data: any) => {
-    const response = await api.post<ApiResponse<any>>('/vacation-requests', data)
+  create: async (data: {
+    start_date: string
+    end_date: string
+    absence_type: string
+    reason?: string
+    comments?: string
+  }) => {
+    const response = await api.post<ApiResponse<VacationRequest>>('/vacation-requests', data)
     return response.data.data
   },
 
@@ -186,6 +201,20 @@ export const vacationService = {
     return response.data.data
   },
 
+  getTeamStats: async (): Promise<{ approved: number; pending: number; rejected: number; total: number }> => {
+    const response = await api.get<
+      ApiResponse<{ approved: number; pending: number; rejected: number; total: number }>
+    >('/vacation-requests/team-stats')
+    return response.data.data
+  },
+
+  getUpcomingAbsences: async (): Promise<{ list: VacationRequest[]; days: number }> => {
+    const response = await api.get<{ data: VacationRequest[]; meta: { days: number }; status: string }>(
+      '/vacation-requests/upcoming-absences',
+    )
+    return { list: response.data.data, days: response.data.meta.days }
+  },
+
   getPending: async (page = 1, perPage = 15) => {
     const response = await api.get<{ data: LaravelPaginator<VacationRequest>; status: string }>('/approvals/pending', {
       params: { page, per_page: perPage },
@@ -200,6 +229,18 @@ export const vacationService = {
 
   reject: async (id: number, reason: string) => {
     const response = await api.post<ApiResponse<any>>(`/vacation-requests/${id}/reject`, { reason })
+    return response.data.data
+  },
+}
+
+export const settingService = {
+  getAll: async (): Promise<Record<string, Setting>> => {
+    const response = await api.get<ApiResponse<Record<string, Setting>>>('/settings')
+    return response.data.data
+  },
+
+  update: async (key: string, value: string): Promise<Setting> => {
+    const response = await api.put<ApiResponse<Setting>>(`/settings/${key}`, { value })
     return response.data.data
   },
 }

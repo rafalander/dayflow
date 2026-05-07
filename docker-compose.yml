@@ -63,6 +63,8 @@ services:
       SESSION_DRIVER: cookie
       CACHE_DRIVER: file
       QUEUE_CONNECTION: sync
+      # auto = seed só se o usuário superadmin não existir | always = roda DatabaseSeeder a cada subida (seeders idempotentes)
+      DAYFLOW_DB_SEED: ${DAYFLOW_DB_SEED:-auto}
     depends_on:
       mysql:
         condition: service_healthy

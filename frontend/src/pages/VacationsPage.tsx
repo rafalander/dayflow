@@ -1,8 +1,9 @@
 import { useState } from 'react'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import toast from 'react-hot-toast'
-import { useVacationRequests, useCreateVacation } from '@/hooks'
+import { useAbsenceTypes, useVacationRequests, useCreateVacation } from '@/hooks'
 import { vacationService } from '@/services'
+import { absenceTypeLabel } from '@/lib/absenceTypes'
 import { formatDateBR } from '@/utils/date'
 import type { VacationRequest } from '@/types'
 
@@ -16,12 +17,14 @@ export default function VacationsPage() {
   const queryClient = useQueryClient()
   const [page] = useState(1)
   const { data: paginator, isPending, isError } = useVacationRequests(page, { per_page: 50 })
+  const { data: absenceTypes = [] } = useAbsenceTypes()
   const createMutation = useCreateVacation()
 
   const [modalOpen, setModalOpen] = useState(false)
   const today = new Date().toISOString().slice(0, 10)
   const [startDate, setStartDate] = useState(() => addDays(today, 7))
   const [endDate, setEndDate] = useState(() => addDays(today, 14))
+  const [absenceType, setAbsenceType] = useState('vacation')
   const [reason, setReason] = useState('')
 
   const deleteMutation = useMutation({
@@ -38,9 +41,10 @@ export default function VacationsPage() {
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault()
     try {
-      const payload: { start_date: string; end_date: string; reason?: string } = {
+      const payload: { start_date: string; end_date: string; absence_type: string; reason?: string } = {
         start_date: startDate,
         end_date: endDate,
+        absence_type: absenceType,
       }
       const r = reason.trim()
       if (r) payload.reason = r
@@ -62,7 +66,7 @@ export default function VacationsPage() {
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-4">
-        <h1 className="text-3xl font-bold text-gray-900">Minhas Férias</h1>
+        <h1 className="text-3xl font-bold text-gray-900">Minhas ausências</h1>
         <button
           type="button"
           onClick={() => setModalOpen(true)}
@@ -79,6 +83,7 @@ export default function VacationsPage() {
         <table className="w-full">
           <thead className="bg-gray-50">
             <tr>
+              <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700">Tipo</th>
               <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700">Início</th>
               <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700">Fim</th>
               <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700">Status</th>
@@ -88,13 +93,14 @@ export default function VacationsPage() {
           <tbody>
             {rows.length === 0 && !isPending && (
               <tr>
-                <td colSpan={4} className="px-6 py-8 text-center text-gray-500">
-                  Nenhuma solicitação de férias
+                <td colSpan={5} className="px-6 py-8 text-center text-gray-500">
+                  Nenhuma solicitação de ausência
                 </td>
               </tr>
             )}
             {rows.map((v) => (
               <tr key={v.id} className="border-t">
+                <td className="px-6 py-3 text-sm">{absenceTypeLabel(v, absenceTypes)}</td>
                 <td className="px-6 py-3 text-sm">{formatDateBR(v.start_date)}</td>
                 <td className="px-6 py-3 text-sm">{formatDateBR(v.end_date)}</td>
                 <td className="px-6 py-3 text-sm">{statusLabel[v.status] ?? v.status}</td>
@@ -129,6 +135,28 @@ export default function VacationsPage() {
           <div className="w-full max-w-md rounded-lg bg-white p-6 shadow-xl">
             <h2 className="text-lg font-semibold text-gray-900">Nova solicitação</h2>
             <form onSubmit={handleCreate} className="mt-4 space-y-4">
+              <div>
+                <label htmlFor="at" className="block text-xs font-medium text-gray-600">
+                  Tipo de ausência
+                </label>
+                <select
+                  id="at"
+                  required
+                  value={absenceType}
+                  onChange={(e) => setAbsenceType(e.target.value)}
+                  className="mt-1 w-full rounded border border-gray-300 px-3 py-2 text-sm"
+                >
+                  {absenceTypes.length === 0 ? (
+                    <option value="vacation">Férias</option>
+                  ) : (
+                    absenceTypes.map((t) => (
+                      <option key={t.slug} value={t.slug}>
+                        {t.label}
+                      </option>
+                    ))
+                  )}
+                </select>
+              </div>
               <div>
                 <label htmlFor="vs" className="block text-xs font-medium text-gray-600">
                   Data início

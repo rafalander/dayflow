@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\VacationRequest;
 use App\Models\User;
+use App\Support\AbsenceTypes;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
@@ -59,18 +60,19 @@ class ReportController extends Controller
 
         $vacations = $query->orderBy('start_date')->get();
 
-        $filename = 'relatorio-ferias-'.now()->format('Y-m-d').'.csv';
+        $filename = 'relatorio-ausencias-'.now()->format('Y-m-d').'.csv';
 
         return response()->streamDownload(function () use ($vacations) {
             $out = fopen('php://output', 'w');
             fwrite($out, "\xEF\xBB\xBF");
-            fputcsv($out, ['Nome', 'E-mail', 'Início', 'Fim', 'Status', 'Dias']);
+            fputcsv($out, ['Nome', 'E-mail', 'Tipo', 'Início', 'Fim', 'Status', 'Dias']);
 
             foreach ($vacations as $v) {
                 $days = $v->start_date->diffInDays($v->end_date) + 1;
                 fputcsv($out, [
                     $v->user?->name ?? '',
                     $v->user?->email ?? '',
+                    AbsenceTypes::label((string) ($v->absence_type ?? 'vacation')),
                     $v->start_date->format('Y-m-d'),
                     $v->end_date->format('Y-m-d'),
                     $v->status,

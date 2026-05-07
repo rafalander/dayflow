@@ -27,11 +27,18 @@ done
 echo "🗄️ Running migrations..."
 php artisan migrate --no-interaction --force
 
-# Run seeders if first time (empty DB)
-USER_COUNT=$(php artisan tinker --execute="echo \App\Models\Role::count();" 2>/dev/null | tail -1 || echo "0")
-if [ "$USER_COUNT" = "0" ]; then
-    echo "🌱 Running database seeders..."
+# Seed when superadmin row is missing (Role model/table were removed; old Role::count() never triggered seed).
+# Optional: DAYFLOW_DB_SEED=always runs full DatabaseSeeder on every start (idempotent seeders; slower startup).
+SEED_MODE="${DAYFLOW_DB_SEED:-auto}"
+if [ "$SEED_MODE" = "always" ]; then
+    echo "🌱 Running database seeders (DAYFLOW_DB_SEED=always)..."
     php artisan db:seed --no-interaction --force
+else
+    SUPERADMIN_EXISTS=$(php artisan tinker --execute="echo \App\Models\User::query()->where('email', config('dayflow.superadmin.email'))->exists() ? '1' : '0';" 2>/dev/null | tail -n1 | tr -d '\r\n[:space:]' || echo "0")
+    if [ "$SUPERADMIN_EXISTS" != "1" ]; then
+        echo "🌱 Running database seeders (superadmin user not found)..."
+        php artisan db:seed --no-interaction --force
+    fi
 fi
 
 # Clear caches
