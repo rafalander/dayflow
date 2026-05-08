@@ -105,7 +105,7 @@ export default function TeamsPage() {
           </button>
         </div>
       ) : (
-        <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-3">
+        <div className="grid auto-rows-[minmax(0,1fr)] gap-6 sm:grid-cols-2 xl:grid-cols-3">
           {teams.map((team) => {
             const accent = team.color || DEFAULT_COLOR
             const lead = team.lead
@@ -114,13 +114,13 @@ export default function TeamsPage() {
                 key={team.id}
                 type="button"
                 onClick={() => navigate(`/teams/${team.id}`)}
-                className="group relative overflow-hidden rounded-2xl border border-gray-100 bg-white text-left shadow-sm ring-1 ring-gray-100 transition hover:-translate-y-0.5 hover:shadow-md"
+                className="group relative flex h-full min-h-0 w-full flex-col overflow-hidden rounded-2xl border border-gray-100 bg-white text-left shadow-sm ring-1 ring-gray-100 transition hover:-translate-y-0.5 hover:shadow-md"
               >
                 <div
-                  className="h-2 w-full"
+                  className="h-2 w-full shrink-0"
                   style={{ background: `linear-gradient(90deg, ${accent}, ${accent}cc)` }}
                 />
-                <div className="flex flex-col gap-4 p-5">
+                <div className="flex min-h-0 flex-1 flex-col gap-4 p-5">
                   <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0">
                       <h2 className="truncate text-lg font-bold text-gray-900">{team.name}</h2>
