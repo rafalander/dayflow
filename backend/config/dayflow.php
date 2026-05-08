@@ -134,7 +134,25 @@ return [
 
     ],
 
+    'api_read_cache' => [
 
+        'vacation_calendar' => (int) env('DAYFLOW_CACHE_VACATION_CALENDAR', 300),
+
+        'team_stats' => (int) env('DAYFLOW_CACHE_TEAM_STATS', 120),
+
+        'upcoming_absences' => (int) env('DAYFLOW_CACHE_UPCOMING_ABSENCES', 180),
+
+        'users_directory' => (int) env('DAYFLOW_CACHE_USERS_DIRECTORY', 240),
+
+        'teams_index' => (int) env('DAYFLOW_CACHE_TEAMS_INDEX', 300),
+
+        'cargos_index' => (int) env('DAYFLOW_CACHE_CARGOS_INDEX', 600),
+
+        'absence_types' => (int) env('DAYFLOW_CACHE_ABSENCE_TYPES', 86400),
+
+        'roles' => (int) env('DAYFLOW_CACHE_ROLES', 86400),
+
+    ],
 
 ];
 

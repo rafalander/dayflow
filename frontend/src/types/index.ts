@@ -57,6 +57,7 @@ export interface User {
   cargo?: Cargo;
   manager?: User;
   subordinates?: User[];
+  subordinates_count?: number;
   vacationRequests?: VacationRequest[];
 }
 

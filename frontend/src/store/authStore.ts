@@ -1,4 +1,5 @@
 import { create } from 'zustand'
+import { clearPersistedQueryCache } from '@/lib/queryPersistence'
 import { User } from '@/types'
 
 interface AuthStore {
@@ -33,11 +34,12 @@ export const useAuthStore = create<AuthStore>((set) => ({
   setError: (error) => set({ error }),
   logout: () => {
     localStorage.removeItem('auth_token')
-    set({ 
-      user: null, 
-      token: null, 
-      isAuthenticated: false, 
-      error: null 
+    clearPersistedQueryCache()
+    set({
+      user: null,
+      token: null,
+      isAuthenticated: false,
+      error: null,
     })
   },
 }))

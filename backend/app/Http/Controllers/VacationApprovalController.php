@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\VacationApproval;
 use App\Models\VacationRequest;
 use App\Services\VacationService;
+use App\Support\ApiQueryCacheGens;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -43,6 +44,8 @@ class VacationApprovalController extends Controller
 
         $this->vacationService->logAudit($request->user(), 'vacation_approved', $vacation);
 
+        ApiQueryCacheGens::bumpVacation();
+
         return response()->json([
             'data' => $vacation->load('approver'),
             'message' => 'Vacation request approved successfully',
@@ -80,6 +83,8 @@ class VacationApprovalController extends Controller
         $this->vacationService->notifyRequester($vacation, 'rejected');
 
         $this->vacationService->logAudit($request->user(), 'vacation_rejected', $vacation);
+
+        ApiQueryCacheGens::bumpVacation();
 
         return response()->json([
             'data' => $vacation->load('approver'),

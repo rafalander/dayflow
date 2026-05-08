@@ -31,6 +31,7 @@ export default function VacationsPage() {
     mutationFn: (id: number) => vacationService.delete(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['vacation-requests'] })
+      queryClient.invalidateQueries({ queryKey: ['vacation-calendar'] })
       toast.success('Solicitação removida')
     },
     onError: () => toast.error('Não foi possível remover'),

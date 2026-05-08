@@ -3,9 +3,11 @@
 namespace App\Http\Controllers;
 
 use App\Models\Cargo;
+use App\Support\ApiQueryCacheGens;
 use App\Support\UserHierarchy;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Validation\ValidationException;
 
 class CargoController extends Controller
@@ -14,7 +16,14 @@ class CargoController extends Controller
     {
         $this->authorize('viewAny', Cargo::class);
 
-        $cargos = Cargo::query()->orderByDesc('level')->orderBy('name')->get();
+        $ttl = (int) config('dayflow.api_read_cache.cargos_index', 600);
+        $gen = ApiQueryCacheGens::cargos();
+
+        $cargos = Cache::remember(
+            "api.cargos.index.{$gen}",
+            $ttl,
+            fn () => Cargo::query()->orderByDesc('level')->orderBy('name')->get()
+        );
 
         return response()->json([
             'data' => $cargos,
@@ -44,6 +53,8 @@ class CargoController extends Controller
             'role' => $validated['role'],
             'level' => $validated['level'],
         ]);
+
+        ApiQueryCacheGens::bumpCargos();
 
         return response()->json([
             'data' => $cargo,
@@ -77,6 +88,8 @@ class CargoController extends Controller
 
         $cargo->update($validated);
 
+        ApiQueryCacheGens::bumpCargos();
+
         return response()->json([
             'data' => $cargo->fresh(),
             'message' => 'Cargo atualizado',
@@ -104,6 +117,8 @@ class CargoController extends Controller
         }
 
         $cargo->delete();
+
+        ApiQueryCacheGens::bumpCargos();
 
         return response()->json([
             'message' => 'Cargo removido',

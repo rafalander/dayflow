@@ -7,9 +7,11 @@ use App\Models\User;
 use App\Services\UpcomingAbsencesService;
 use App\Services\VacationService;
 use App\Support\AbsenceTypes;
+use App\Support\ApiQueryCacheGens;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Validation\Rule;
 
 class VacationRequestController extends Controller
@@ -108,6 +110,8 @@ class VacationRequestController extends Controller
 
         $this->vacationService->notifyApprover($vacation);
 
+        ApiQueryCacheGens::bumpVacation();
+
         return response()->json([
             'data' => $vacation,
             'message' => 'Vacation request created successfully',
@@ -144,6 +148,8 @@ class VacationRequestController extends Controller
 
         $vacation_request->save();
 
+        ApiQueryCacheGens::bumpVacation();
+
         return response()->json([
             'data' => $vacation_request,
             'message' => 'Vacation request updated successfully',
@@ -164,6 +170,8 @@ class VacationRequestController extends Controller
 
         $vacation_request->delete();
 
+        ApiQueryCacheGens::bumpVacation();
+
         return response()->json([
             'message' => 'Vacation request deleted successfully',
             'status' => 'success',
@@ -181,41 +189,60 @@ class VacationRequestController extends Controller
             ], 403);
         }
 
-        if ($auth->isAdmin()) {
-            $userIds = User::query()->active()->pluck('id');
-        } else {
-            $userIds = $auth->subordinates()->pluck('id');
-        }
+        $gen = ApiQueryCacheGens::vacation();
+        $ttl = (int) config('dayflow.api_read_cache.team_stats', 120);
+        $userId = $auth->id;
 
-        $base = VacationRequest::query()->whereIn('user_id', $userIds);
+        $data = Cache::remember(
+            "api.team_stats.{$gen}.{$userId}",
+            $ttl,
+            function () use ($auth) {
+                if ($auth->isAdmin()) {
+                    $userIds = User::query()->active()->pluck('id');
+                } else {
+                    $userIds = $auth->subordinates()->pluck('id');
+                }
 
-        $approved = (clone $base)->where('status', 'approved')->count();
-        $pending = (clone $base)->where('status', 'pending')->count();
-        $rejected = (clone $base)->where('status', 'rejected')->count();
-        $total = (clone $base)->count();
+                $base = VacationRequest::query()->whereIn('user_id', $userIds);
+
+                return [
+                    'approved' => (clone $base)->where('status', 'approved')->count(),
+                    'pending' => (clone $base)->where('status', 'pending')->count(),
+                    'rejected' => (clone $base)->where('status', 'rejected')->count(),
+                    'total' => (clone $base)->count(),
+                ];
+            }
+        );
 
         return response()->json([
-            'data' => [
-                'approved' => $approved,
-                'pending' => $pending,
-                'rejected' => $rejected,
-                'total' => $total,
-            ],
+            'data' => $data,
             'status' => 'success',
         ]);
     }
 
     public function upcomingAbsences(Request $request): JsonResponse
     {
-        $result = $this->upcomingAbsencesService->upcomingApprovedVacations();
+        $days = $this->upcomingAbsencesService->resolveHorizonDays();
+        $gen = ApiQueryCacheGens::vacation();
+        $ttl = (int) config('dayflow.api_read_cache.upcoming_absences', 180);
 
-        return response()->json([
-            'data' => $result['vacations'],
-            'meta' => [
-                'days' => $result['days'],
-            ],
-            'status' => 'success',
-        ]);
+        $payload = Cache::remember(
+            "api.upcoming.{$gen}.d{$days}",
+            $ttl,
+            function () {
+                $result = $this->upcomingAbsencesService->upcomingApprovedVacations();
+
+                return [
+                    'data' => $result['vacations'],
+                    'meta' => [
+                        'days' => $result['days'],
+                    ],
+                    'status' => 'success',
+                ];
+            }
+        );
+
+        return response()->json($payload);
     }
 
     public function calendar(Request $request): JsonResponse
@@ -227,14 +254,37 @@ class VacationRequestController extends Controller
 
         $startDate = $validated['start_date'];
         $endDate = $validated['end_date'];
+        $gen = ApiQueryCacheGens::vacation();
+        $ttl = (int) config('dayflow.api_read_cache.vacation_calendar', 300);
 
-        $vacations = VacationRequest::query()
-            ->where('status', 'approved')
+        $approved = Cache::remember(
+            "api.calendar.{$gen}.{$startDate}.{$endDate}",
+            $ttl,
+            function () use ($startDate, $endDate) {
+                return VacationRequest::query()
+                    ->where('status', 'approved')
+                    ->whereDate('start_date', '<=', $endDate)
+                    ->whereDate('end_date', '>=', $startDate)
+                    ->with(['user:id,name,email'])
+                    ->orderBy('start_date')
+                    ->get();
+            }
+        );
+
+        $pendingMine = VacationRequest::query()
+            ->where('user_id', $request->user()->id)
+            ->where('status', 'pending')
             ->whereDate('start_date', '<=', $endDate)
             ->whereDate('end_date', '>=', $startDate)
             ->with(['user:id,name,email'])
             ->orderBy('start_date')
             ->get();
+
+        $vacations = $approved
+            ->concat($pendingMine)
+            ->unique('id')
+            ->sortBy('start_date')
+            ->values();
 
         return response()->json([
             'data' => $vacations,

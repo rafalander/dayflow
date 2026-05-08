@@ -29,9 +29,6 @@ export default function TeamDetailPage() {
   const syncMut = useSyncTeamMembers()
   const deleteMut = useDeleteTeam()
 
-  const { data: directoryPaginator } = useUserDirectory(isAdmin && Boolean(data))
-  const directoryUsers: User[] = directoryPaginator?.data ?? []
-
   const [editOpen, setEditOpen] = useState(false)
   const [membersOpen, setMembersOpen] = useState(false)
   const [editName, setEditName] = useState('')
@@ -39,6 +36,11 @@ export default function TeamDetailPage() {
   const [editColor, setEditColor] = useState(DEFAULT_COLOR)
   const [memberSearch, setMemberSearch] = useState('')
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set())
+
+  const { data: directoryPaginator, isPending: directoryPending } = useUserDirectory(
+    isAdmin && Boolean(data) && membersOpen,
+  )
+  const directoryUsers: User[] = directoryPaginator?.data ?? []
 
   const team = data?.team
   const hierarchy = data?.hierarchy ?? null
@@ -313,7 +315,11 @@ export default function TeamDetailPage() {
             </div>
             <div className="min-h-0 flex-1 overflow-y-auto px-6 py-2">
               <ul className="divide-y divide-gray-100">
-                {filteredDirectory.map((u) => {
+                {directoryPending ? (
+                  <li className="py-8 text-center text-sm text-gray-500">A carregar utilizadores…</li>
+                ) : null}
+                {!directoryPending &&
+                  filteredDirectory.map((u) => {
                   const isLead = u.id === team.lead_id
                   const checked = selectedIds.has(u.id)
                   return (
@@ -357,7 +363,7 @@ export default function TeamDetailPage() {
               <button
                 type="button"
                 onClick={() => void handleSaveMembers()}
-                disabled={syncMut.isPending}
+                disabled={syncMut.isPending || directoryPending}
                 className="rounded-lg bg-primary px-5 py-2 font-semibold text-white disabled:opacity-60"
               >
                 {syncMut.isPending ? 'A guardar…' : 'Guardar membros'}

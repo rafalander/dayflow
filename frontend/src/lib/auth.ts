@@ -7,5 +7,6 @@ export function isAdminUser(user?: User | null): boolean {
 export function canViewTeamVacationStats(user?: User | null): boolean {
   if (!user) return false
   if (isAdminUser(user)) return true
-  return (user.subordinates?.length ?? 0) > 0
+  const n = user.subordinates_count ?? user.subordinates?.length ?? 0
+  return n > 0
 }

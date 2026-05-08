@@ -5,9 +5,12 @@ namespace App\Http\Controllers;
 use App\Models\AuditLog;
 use App\Models\Cargo;
 use App\Models\User;
+use App\Support\ApiQueryCacheGens;
 use App\Support\UserHierarchy;
-use Illuminate\Http\Request;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 
@@ -66,6 +69,8 @@ class UserController extends Controller
             ]
         );
 
+        ApiQueryCacheGens::bumpUserDirectory();
+
         return response()->json([
             'data' => $user,
             'message' => 'Usuário criado',
@@ -81,6 +86,44 @@ class UserController extends Controller
         $auth->loadMissing('cargo');
         $authLevel = UserHierarchy::level($auth);
 
+        $perPage = (int) $request->input('per_page', 15);
+        $page = (int) $request->input('page', 1);
+
+        if ($this->shouldCacheUserDirectory($request, $page, $perPage)) {
+            $ttl = (int) config('dayflow.api_read_cache.users_directory', 240);
+            $gen = ApiQueryCacheGens::userDirectory();
+            $users = Cache::remember(
+                "api.users.directory.{$gen}.{$auth->id}",
+                $ttl,
+                fn () => $this->buildUserIndexQuery($request, $auth, $authLevel)->paginate($perPage)
+            );
+
+            return response()->json([
+                'data' => $users,
+                'status' => 'success',
+            ]);
+        }
+
+        $users = $this->buildUserIndexQuery($request, $auth, $authLevel)->paginate($perPage);
+
+        return response()->json([
+            'data' => $users,
+            'status' => 'success',
+        ]);
+    }
+
+    private function shouldCacheUserDirectory(Request $request, int $page, int $perPage): bool
+    {
+        return $page === 1
+            && $perPage === 500
+            && ! $request->filled('search')
+            && ! $request->filled('role')
+            && ! $request->filled('manager_id')
+            && ! $request->has('is_active');
+    }
+
+    private function buildUserIndexQuery(Request $request, User $auth, int $authLevel): Builder
+    {
         $query = User::query()
             ->with('manager', 'cargo')
             ->join('positions', 'users.cargo_id', '=', 'positions.id');
@@ -110,15 +153,9 @@ class UserController extends Controller
             });
         }
 
-        $users = $query
+        return $query
             ->orderByDesc('positions.level')
-            ->select('users.*')
-            ->paginate($request->input('per_page', 15));
-
-        return response()->json([
-            'data' => $users,
-            'status' => 'success',
-        ]);
+            ->select('users.*');
     }
 
     public function show(User $user): JsonResponse
@@ -183,6 +220,8 @@ class UserController extends Controller
         AuditLog::log('user_updated', User::class, $user->id, $before, $user->only([
             'name', 'email', 'is_active', 'cargo_id', 'manager_id',
         ]));
+
+        ApiQueryCacheGens::bumpUserDirectory();
 
         return response()->json([
             'data' => $user,

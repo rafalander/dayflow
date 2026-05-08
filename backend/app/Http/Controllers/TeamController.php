@@ -4,9 +4,11 @@ namespace App\Http\Controllers;
 
 use App\Models\Team;
 use App\Models\User;
+use App\Support\ApiQueryCacheGens;
 use App\Support\UserHierarchy;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Validation\ValidationException;
 
 class TeamController extends Controller
@@ -15,11 +17,18 @@ class TeamController extends Controller
     {
         $this->authorize('viewAny', Team::class);
 
-        $teams = Team::query()
-            ->with(['lead.cargo'])
-            ->withCount('members')
-            ->orderBy('name')
-            ->get();
+        $ttl = (int) config('dayflow.api_read_cache.teams_index', 300);
+        $gen = ApiQueryCacheGens::teams();
+
+        $teams = Cache::remember(
+            "api.teams.index.{$gen}",
+            $ttl,
+            fn () => Team::query()
+                ->with(['lead.cargo'])
+                ->withCount('members')
+                ->orderBy('name')
+                ->get()
+        );
 
         return response()->json([
             'data' => $teams,
@@ -66,6 +75,9 @@ class TeamController extends Controller
         $team->load(['lead.cargo']);
         $team->loadCount('members');
 
+        ApiQueryCacheGens::bumpTeams();
+        ApiQueryCacheGens::bumpUserDirectory();
+
         return response()->json([
             'data' => $team,
             'message' => 'Time criado',
@@ -109,6 +121,8 @@ class TeamController extends Controller
         $team->load(['lead.cargo']);
         $team->loadCount('members');
 
+        ApiQueryCacheGens::bumpTeams();
+
         return response()->json([
             'data' => $team,
             'message' => 'Time atualizado',
@@ -123,6 +137,9 @@ class TeamController extends Controller
         User::where('team_id', $team->id)->update(['team_id' => null]);
 
         $team->delete();
+
+        ApiQueryCacheGens::bumpTeams();
+        ApiQueryCacheGens::bumpUserDirectory();
 
         return response()->json([
             'message' => 'Time removido',
@@ -162,6 +179,9 @@ class TeamController extends Controller
         $team->loadCount('members');
 
         $memberIds = User::where('team_id', $team->id)->orderBy('name')->pluck('id')->values()->all();
+
+        ApiQueryCacheGens::bumpTeams();
+        ApiQueryCacheGens::bumpUserDirectory();
 
         return response()->json([
             'data' => [

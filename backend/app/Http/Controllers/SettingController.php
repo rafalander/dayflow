@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Models\Setting;
 use App\Models\User;
+use App\Services\UpcomingAbsencesService;
+use App\Support\ApiQueryCacheGens;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -44,6 +46,10 @@ class SettingController extends Controller
         }
 
         $setting = Setting::updateOrCreate(['key' => $key], $payload);
+
+        if ($key === UpcomingAbsencesService::SETTING_KEY) {
+            ApiQueryCacheGens::bumpVacation();
+        }
 
         return response()->json([
             'data' => $setting->fresh(),

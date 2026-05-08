@@ -21,6 +21,7 @@ export const useAuth = () => {
     queryKey: ['auth', 'me'],
     queryFn: authService.getMe,
     retry: false,
+    staleTime: 10 * 60 * 1000,
   })
 
   const logoutMutation = useMutation({
@@ -47,6 +48,7 @@ export const useUserDirectory = (enabled: boolean) => {
     queryKey: ['users', 'directory'],
     queryFn: () => userService.getAll(1, '', 500),
     enabled,
+    staleTime: 5 * 60 * 1000,
   })
 }
 
@@ -63,6 +65,7 @@ export const useCargos = (enabled = true) => {
     queryKey: ['cargos'],
     queryFn: cargoService.getAll,
     enabled,
+    staleTime: 5 * 60 * 1000,
   })
 }
 
@@ -159,6 +162,7 @@ export const useTeams = (enabled = true) => {
     queryKey: ['teams'],
     queryFn: teamService.getAll,
     enabled,
+    staleTime: 60 * 1000,
   })
 }
 
@@ -167,6 +171,7 @@ export const useTeam = (id: number | null) => {
     queryKey: ['teams', id],
     queryFn: () => teamService.getById(id!),
     enabled: id != null && id > 0,
+    staleTime: 60 * 1000,
   })
 }
 
@@ -246,6 +251,7 @@ export const useTeamVacationStats = (enabled: boolean) => {
     queryKey: ['vacation-requests', 'team-stats'],
     queryFn: () => vacationService.getTeamStats(),
     enabled,
+    staleTime: 2 * 60 * 1000,
   })
 }
 
@@ -253,6 +259,7 @@ export const useUpcomingAbsences = () => {
   return useQuery({
     queryKey: ['vacation-requests', 'upcoming-absences'],
     queryFn: () => vacationService.getUpcomingAbsences(),
+    staleTime: 2 * 60 * 1000,
   })
 }
 
@@ -295,6 +302,7 @@ export const useCreateVacation = () => {
     mutationFn: vacationService.create,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['vacation-requests'] })
+      queryClient.invalidateQueries({ queryKey: ['vacation-calendar'] })
       toast.success('Solicitação de ausência criada')
     },
     onError: () => {
@@ -310,6 +318,7 @@ export const useApproveVacation = () => {
       vacationService.approve(id, comments),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['vacation-requests'] })
+      queryClient.invalidateQueries({ queryKey: ['vacation-calendar'] })
       queryClient.invalidateQueries({ queryKey: ['approvals'] })
       toast.success('Solicitação aprovada')
     },
@@ -326,6 +335,7 @@ export const useRejectVacation = () => {
       vacationService.reject(id, reason),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['vacation-requests'] })
+      queryClient.invalidateQueries({ queryKey: ['vacation-calendar'] })
       queryClient.invalidateQueries({ queryKey: ['approvals'] })
       toast.success('Solicitação recusada')
     },

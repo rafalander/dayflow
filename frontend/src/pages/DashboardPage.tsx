@@ -38,7 +38,7 @@ export default function DashboardPage() {
       <div>
         <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
         <p className="mt-2 text-gray-600">
-          Calendário da equipe para todos; resumo de solicitações apenas para gestão (admin vê a organização, demais
+          Calendário geral da equipe; resumo de solicitações apenas para gestão (admin vê a organização, demais
           gestores veem só subordinados diretos). Próximas ausências e horizonte ficam em Configurações.
         </p>
       </div>

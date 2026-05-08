@@ -20,14 +20,15 @@ export default function TeamsPage() {
 
   const { data: teams = [], isPending, isError } = useTeams(isAdmin)
   const createMut = useCreateTeam()
-  const { data: directoryPaginator } = useUserDirectory(isAdmin)
-  const directoryUsers: User[] = directoryPaginator?.data ?? []
 
   const [modalOpen, setModalOpen] = useState(false)
   const [name, setName] = useState('')
   const [description, setDescription] = useState('')
   const [color, setColor] = useState(DEFAULT_COLOR)
   const [leadId, setLeadId] = useState<number | ''>('')
+
+  const { data: directoryPaginator, isPending: directoryPending } = useUserDirectory(isAdmin && modalOpen)
+  const directoryUsers: User[] = directoryPaginator?.data ?? []
 
   const leadOptions = useMemo(() => {
     return [...directoryUsers].sort((a, b) => a.name.localeCompare(b.name, 'pt'))
@@ -234,8 +235,9 @@ export default function TeamsPage() {
                   onChange={(e) => setLeadId(e.target.value === '' ? '' : Number(e.target.value))}
                   className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 shadow-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
                   required
+                  disabled={directoryPending}
                 >
-                  <option value="">Selecione…</option>
+                  <option value="">{directoryPending ? 'A carregar utilizadores…' : 'Selecione…'}</option>
                   {leadOptions.map((u) => (
                     <option key={u.id} value={u.id}>
                       {u.name} · {u.cargo?.name ?? '—'}

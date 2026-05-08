@@ -1,5 +1,5 @@
 import { useMemo, useRef, useState } from 'react'
-import { useQuery } from '@tanstack/react-query'
+import { keepPreviousData, useQuery } from '@tanstack/react-query'
 import {
   addMonths,
   eachDayOfInterval,
@@ -13,17 +13,18 @@ import {
 } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
-import { useAbsenceTypes } from '@/hooks'
+import { useAbsenceTypes, useAuth } from '@/hooks'
 import { absenceTypeLabel } from '@/lib/absenceTypes'
 import { vacationService } from '@/services'
-import { formatDateBR, toIsoDateKey } from '@/utils/date'
+import { coerceIsoDateKey, formatDateBR, toIsoDateKey } from '@/utils/date'
 import type { VacationRequest } from '@/types'
 
 const WEEKDAYS = ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom']
 
 function dayInVacation(dayIso: string, v: VacationRequest): boolean {
-  const start = toIsoDateKey(v.start_date)
-  const end = toIsoDateKey(v.end_date)
+  const start = coerceIsoDateKey(v.start_date)
+  const end = coerceIsoDateKey(v.end_date)
+  if (!start || !end) return false
   return start <= dayIso && end >= dayIso
 }
 
@@ -31,6 +32,26 @@ function shortName(fullName: string): string {
   const parts = fullName.trim().split(/\s+/)
   if (parts.length <= 1) return parts[0]?.slice(0, 12) ?? '?'
   return `${parts[0]} ${parts[parts.length - 1][0]}.`
+}
+
+function normalizeCalendarRow(x: unknown): VacationRequest | null {
+  if (x == null || typeof x !== 'object') return null
+  const o = x as Record<string, unknown>
+  const start =
+    coerceIsoDateKey(o.start_date) || coerceIsoDateKey(o.startDate)
+  const end = coerceIsoDateKey(o.end_date) || coerceIsoDateKey(o.endDate)
+  if (!start || !end) return null
+  return { ...(o as unknown as VacationRequest), start_date: start, end_date: end }
+}
+
+function asVacationRequestList(data: unknown): VacationRequest[] {
+  if (data == null) return []
+  const raw: unknown[] = Array.isArray(data)
+    ? data
+    : typeof data === 'object'
+      ? Object.values(data as Record<string, unknown>)
+      : []
+  return raw.map(normalizeCalendarRow).filter((v): v is VacationRequest => v !== null)
 }
 
 function chipStyles(userId: number): { bg: string; text: string } {
@@ -46,6 +67,8 @@ function chipStyles(userId: number): { bg: string; text: string } {
 }
 
 export default function TeamVacationCalendar() {
+  const { meQuery } = useAuth()
+  const viewerId = meQuery.data?.id
   const { data: absenceTypes = [] } = useAbsenceTypes()
   const monthInputRef = useRef<HTMLInputElement>(null)
   const [cursor, setCursor] = useState(() => startOfMonth(new Date()))
@@ -77,10 +100,15 @@ export default function TeamVacationCalendar() {
     }
   }, [cursor])
 
-  const { data: vacations = [], isPending, isError } = useQuery({
-    queryKey: ['vacation-calendar', rangeStart, rangeEnd],
+  const { data: calendarData, isPending, isError, isFetching } = useQuery({
+    queryKey: ['vacation-calendar', viewerId, rangeStart, rangeEnd],
     queryFn: () => vacationService.getCalendar(rangeStart, rangeEnd),
+    enabled: viewerId != null,
+    staleTime: 3 * 60 * 1000,
+    placeholderData: keepPreviousData,
   })
+
+  const vacations = useMemo(() => asVacationRequestList(calendarData), [calendarData])
 
   const days = useMemo(
     () => eachDayOfInterval({ start: gridStart, end: gridEnd }),
@@ -103,7 +131,8 @@ export default function TeamVacationCalendar() {
         <div>
           <h2 className="text-lg font-semibold text-gray-900">Calendário da equipe</h2>
           <p className="mt-1 text-sm text-gray-500">
-            Ausências aprovadas no período — visível para todos na empresa. Passe o mouse sobre um nome para ver tipo e intervalo.
+            Ausências aprovadas da empresa no período; as suas solicitações pendentes também aparecem aqui. Passe o mouse
+            sobre um nome para ver tipo e intervalo.
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2 self-start">
@@ -161,7 +190,11 @@ export default function TeamVacationCalendar() {
 
       {!isPending && !isError && (
         <>
-          <div className="mt-4 overflow-hidden rounded-xl border border-gray-200">
+          <div
+            className={`mt-4 overflow-hidden rounded-xl border border-gray-200 transition-opacity duration-200 ${
+              isFetching ? 'pointer-events-none opacity-60' : 'opacity-100'
+            }`}
+          >
             <div className="grid grid-cols-7 gap-px bg-gray-200">
               {WEEKDAYS.map((w) => (
                 <div
@@ -197,14 +230,18 @@ export default function TeamVacationCalendar() {
                       const label = u?.name ? shortName(u.name) : `#${v.user_id}`
                       const { bg, text } = chipStyles(v.user_id)
                       const typeL = absenceTypeLabel(v, absenceTypes)
+                      const pending = v.status === 'pending'
+                      const statusNote = pending ? ' — pendente de aprovação' : ''
                       const title = u?.name
-                        ? `${u.name} — ${typeL} — ${formatDateBR(v.start_date)} → ${formatDateBR(v.end_date)}`
-                        : `${typeL} — ${formatDateBR(v.start_date)} → ${formatDateBR(v.end_date)}`
+                        ? `${u.name} — ${typeL} — ${formatDateBR(v.start_date)} → ${formatDateBR(v.end_date)}${statusNote}`
+                        : `${typeL} — ${formatDateBR(v.start_date)} → ${formatDateBR(v.end_date)}${statusNote}`
                       return (
                         <span
                           key={`${v.id}-${iso}`}
                           title={title}
-                          className={`truncate rounded px-1 py-0.5 text-[10px] font-medium leading-tight sm:text-[11px] ${bg} ${text}`}
+                          className={`truncate rounded px-1 py-0.5 text-[10px] font-medium leading-tight sm:text-[11px] ${bg} ${text} ${
+                            pending ? 'ring-1 ring-inset ring-amber-400/70' : ''
+                          }`}
                         >
                           {label}
                         </span>
@@ -222,7 +259,7 @@ export default function TeamVacationCalendar() {
 
           {vacations.length === 0 && (
             <p className="mt-4 text-center text-sm text-gray-500">
-              Sem ausências aprovadas neste período.
+              Nada neste período: nem ausências aprovadas da empresa, nem suas solicitações pendentes.
             </p>
           )}
 
@@ -242,6 +279,9 @@ export default function TeamVacationCalendar() {
                       <span className="text-gray-600">
                         {absenceTypeLabel(v, absenceTypes)} · {formatDateBR(v.start_date)} →{' '}
                         {formatDateBR(v.end_date)}
+                        {v.status === 'pending' ? (
+                          <span className="text-amber-700"> · pendente</span>
+                        ) : null}
                       </span>
                     </li>
                   ))}
