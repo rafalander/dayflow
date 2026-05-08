@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 import { Outlet, useNavigate, useLocation } from 'react-router-dom'
-import { Menu, X, LogOut, Calendar, CheckCircle, BarChart3, Users, Briefcase, Network } from 'lucide-react'
+import { Menu, X, LogOut, Calendar, CheckCircle, BarChart3, Users, Briefcase, Network, Settings } from 'lucide-react'
 import UserAvatar from '@/components/UserAvatar'
 import { useAuthStore } from '@/store/authStore'
 import { useAuth } from '@/hooks'
@@ -43,6 +43,7 @@ export default function Layout() {
         { label: 'Cargos', path: '/cargos', icon: Briefcase },
         { label: 'Times', path: '/teams', icon: Network, matchPrefix: '/teams' },
       )
+      base.push({ label: 'Configurações', path: '/settings', icon: Settings })
     }
     return base
   }, [user])

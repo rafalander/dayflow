@@ -1,3 +1,4 @@
+import axios from 'axios'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import {
   authService,
@@ -256,7 +257,7 @@ export const useUpcomingAbsences = () => {
   })
 }
 
-export const useUpdateDashboardAbsencesHorizon = () => {
+export const useUpdateUpcomingAbsencesHorizon = () => {
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: (value: string) =>
@@ -265,7 +266,13 @@ export const useUpdateDashboardAbsencesHorizon = () => {
       queryClient.invalidateQueries({ queryKey: ['vacation-requests', 'upcoming-absences'] })
       toast.success('Horizonte de dias atualizado')
     },
-    onError: () => toast.error('Não foi possível salvar a configuração'),
+    onError: (err: unknown) => {
+      const msg =
+        axios.isAxiosError(err) && typeof err.response?.data?.message === 'string'
+          ? err.response.data.message
+          : null
+      toast.error(msg ?? 'Não foi possível salvar a configuração')
+    },
   })
 }
 

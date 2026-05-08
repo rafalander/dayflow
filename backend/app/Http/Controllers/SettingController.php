@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Setting;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 
@@ -39,19 +40,24 @@ class SettingController extends Controller
      */
     public function update(Request $request, string $key): JsonResponse
     {
-        $this->authorize('admin');
-
-        $setting = Setting::where('key', $key)->firstOrFail();
+        $this->authorize('admin', User::class);
 
         $validated = $request->validate([
             'value' => 'required|string',
             'description' => 'sometimes|string',
         ]);
 
-        $setting->update($validated);
+        // Criar o registro se ainda não existir (ex.: ambiente sem SettingSeeder — o horizonte
+        // de ausências ainda funciona via config, mas salvar na UI exige esta linha).
+        $payload = ['value' => $validated['value']];
+        if (array_key_exists('description', $validated)) {
+            $payload['description'] = $validated['description'];
+        }
+
+        $setting = Setting::updateOrCreate(['key' => $key], $payload);
 
         return response()->json([
-            'data' => $setting,
+            'data' => $setting->fresh(),
             'message' => 'Setting updated successfully',
             'status' => 'success',
         ]);

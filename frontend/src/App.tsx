@@ -17,6 +17,7 @@ import UsersPage from '@/pages/UsersPage'
 import CargosPage from '@/pages/CargosPage'
 import TeamsPage from '@/pages/TeamsPage'
 import TeamDetailPage from '@/pages/TeamDetailPage'
+import SettingsPage from '@/pages/SettingsPage'
 
 export default function App() {
   return (
@@ -37,6 +38,8 @@ export default function App() {
               <Route path="/vacations" element={<Navigate to="/ausencias" replace />} />
               <Route path="/approvals" element={<ApprovalsPage />} />
               <Route path="/reports" element={<ReportsPage />} />
+              <Route path="/configuracoes" element={<SettingsPage />} />
+              <Route path="/settings" element={<Navigate to="/configuracoes" replace />} />
               <Route path="/profile" element={<ProfilePage />} />
               <Route
                 path="/users"

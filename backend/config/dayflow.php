@@ -84,15 +84,15 @@ return [
 
     |--------------------------------------------------------------------------
 
-    | Dashboard — próximas ausências
+    | Próximas ausências — horizonte (dias)
 
     |--------------------------------------------------------------------------
 
     |
 
-    | Padrão quando não existir registro em `settings` (chave
+    | Padrão quando não existir registro em `settings` (mesma chave que
 
-    | dashboard_upcoming_absences_days). Admins podem alterar via API de settings.
+    | UpcomingAbsencesService::SETTING_KEY). Admins alteram na UI Configurações ou via API de settings.
 
     |
 

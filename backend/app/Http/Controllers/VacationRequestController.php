@@ -2,9 +2,9 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Setting;
 use App\Models\VacationRequest;
 use App\Models\User;
+use App\Services\UpcomingAbsencesService;
 use App\Services\VacationService;
 use App\Support\AbsenceTypes;
 use Carbon\Carbon;
@@ -14,7 +14,10 @@ use Illuminate\Validation\Rule;
 
 class VacationRequestController extends Controller
 {
-    public function __construct(private VacationService $vacationService) {}
+    public function __construct(
+        private VacationService $vacationService,
+        private UpcomingAbsencesService $upcomingAbsencesService,
+    ) {}
 
     /**
      * List vacation requests
@@ -234,26 +237,12 @@ class VacationRequestController extends Controller
      */
     public function upcomingAbsences(Request $request): JsonResponse
     {
-        $rawDays = Setting::where('key', 'dashboard_upcoming_absences_days')->value('value');
-        $days = is_numeric($rawDays) ? (int) $rawDays : (int) config('dayflow.dashboard_upcoming_absences_days', 30);
-        $days = max(1, min($days, 366));
-
-        $today = now()->startOfDay();
-        $until = (clone $today)->addDays($days)->endOfDay();
-
-        $vacations = VacationRequest::query()
-            ->where('status', 'approved')
-            ->whereDate('start_date', '>=', $today->toDateString())
-            ->whereDate('start_date', '<=', $until->toDateString())
-            ->with(['user:id,name,email'])
-            ->orderBy('start_date')
-            ->orderBy('user_id')
-            ->get();
+        $result = $this->upcomingAbsencesService->upcomingApprovedVacations();
 
         return response()->json([
-            'data' => $vacations,
+            'data' => $result['vacations'],
             'meta' => [
-                'days' => $days,
+                'days' => $result['days'],
             ],
             'status' => 'success',
         ]);

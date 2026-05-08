@@ -2,8 +2,9 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Seeder;
 use App\Models\Setting;
+use App\Services\UpcomingAbsencesService;
+use Illuminate\Database\Seeder;
 
 class SettingSeeder extends Seeder
 {
@@ -46,9 +47,9 @@ class SettingSeeder extends Seeder
                 'description' => 'Organization name',
             ],
             [
-                'key' => 'dashboard_upcoming_absences_days',
+                'key' => UpcomingAbsencesService::SETTING_KEY,
                 'value' => '30',
-                'description' => 'Horizonte (dias) para listar próximas ausências aprovadas no dashboard',
+                'description' => 'Horizonte (dias) para próximas ausências aprovadas (Configurações / integrações)',
             ],
         ];
 
