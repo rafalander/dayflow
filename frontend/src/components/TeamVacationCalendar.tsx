@@ -1,4 +1,5 @@
 import { useMemo, useRef, useState } from 'react'
+import axios from 'axios'
 import { keepPreviousData, useQuery } from '@tanstack/react-query'
 import {
   addMonths,
@@ -106,6 +107,11 @@ export default function TeamVacationCalendar() {
     enabled: viewerId != null,
     staleTime: 3 * 60 * 1000,
     placeholderData: keepPreviousData,
+    refetchOnWindowFocus: false,
+    retry(failureCount, err) {
+      if (axios.isCancel(err)) return false
+      return failureCount < 3
+    },
   })
 
   const vacations = useMemo(() => asVacationRequestList(calendarData), [calendarData])

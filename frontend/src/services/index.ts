@@ -194,10 +194,14 @@ export const vacationService = {
   },
 
   getCalendar: async (startDate: string, endDate: string): Promise<VacationRequest[]> => {
-    const response = await api.get<{ data: VacationRequest[]; status: string }>('/vacation-requests/calendar', {
+    const response = await api.get<{ data?: unknown; status?: string }>('/vacation-requests/calendar', {
       params: { start_date: startDate, end_date: endDate },
     })
-    return response.data.data
+    const raw = response.data?.data
+    if (raw == null) return []
+    if (Array.isArray(raw)) return raw as VacationRequest[]
+    if (typeof raw === 'object') return Object.values(raw) as VacationRequest[]
+    return []
   },
 
   getTeamStats: async (): Promise<{ approved: number; pending: number; rejected: number; total: number }> => {

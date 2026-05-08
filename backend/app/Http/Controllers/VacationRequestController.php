@@ -11,7 +11,9 @@ use App\Support\ApiQueryCacheGens;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\Rule;
 
 class VacationRequestController extends Controller
@@ -257,19 +259,23 @@ class VacationRequestController extends Controller
         $gen = ApiQueryCacheGens::vacation();
         $ttl = (int) config('dayflow.api_read_cache.vacation_calendar', 300);
 
+        $cacheKey = "api.calendar.{$gen}.{$startDate}.{$endDate}";
+
         $approved = Cache::remember(
-            "api.calendar.{$gen}.{$startDate}.{$endDate}",
+            $cacheKey,
             $ttl,
-            function () use ($startDate, $endDate) {
-                return VacationRequest::query()
-                    ->where('status', 'approved')
-                    ->whereDate('start_date', '<=', $endDate)
-                    ->whereDate('end_date', '>=', $startDate)
-                    ->with(['user:id,name,email'])
-                    ->orderBy('start_date')
-                    ->get();
-            }
+            fn () => $this->approvedVacationsOverlapping($startDate, $endDate)
         );
+
+        if (! $approved instanceof Collection) {
+            Log::warning('Vacation calendar cache entry was not a Collection; rebuilding.', [
+                'key' => $cacheKey,
+                'type' => is_object($approved) ? $approved::class : gettype($approved),
+            ]);
+            Cache::forget($cacheKey);
+            $approved = $this->approvedVacationsOverlapping($startDate, $endDate);
+            Cache::put($cacheKey, $approved, $ttl);
+        }
 
         $pendingMine = VacationRequest::query()
             ->where('user_id', $request->user()->id)
@@ -290,5 +296,19 @@ class VacationRequestController extends Controller
             'data' => $vacations,
             'status' => 'success',
         ]);
+    }
+
+    /**
+     * @return \Illuminate\Database\Eloquent\Collection<int, VacationRequest>
+     */
+    private function approvedVacationsOverlapping(string $startDate, string $endDate)
+    {
+        return VacationRequest::query()
+            ->where('status', 'approved')
+            ->whereDate('start_date', '<=', $endDate)
+            ->whereDate('end_date', '>=', $startDate)
+            ->with(['user:id,name,email'])
+            ->orderBy('start_date')
+            ->get();
     }
 }
