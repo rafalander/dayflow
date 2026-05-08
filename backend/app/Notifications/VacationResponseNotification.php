@@ -9,11 +9,23 @@ class VacationResponseNotification extends Notification
 {
     public function __construct(private VacationRequest $vacation, private string $action) {}
 
+    /**
+     * @return list<string>
+     */
     public function via($notifiable): array
     {
         return ['database', 'mail'];
     }
 
+    /**
+     * @return array{
+     *     vacation_id: int,
+     *     action: string,
+     *     start_date: string,
+     *     end_date: string,
+     *     approver_name: string
+     * }
+     */
     public function toArray($notifiable): array
     {
         return [

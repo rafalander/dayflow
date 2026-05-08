@@ -3,12 +3,9 @@ import { useAuthStore } from '@/store/authStore'
 
 const api: AxiosInstance = axios.create({
   baseURL: import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api',
-  // Bearer token via header — não usar credentials aqui: com `*` no CORS do Laravel,
-  // navegadores bloqueiam `*` quando `withCredentials` é true (preflight falha).
   withCredentials: false,
 })
 
-// Add token to requests (força sem cookies entre origens — evita CORS + '*')
 api.interceptors.request.use((config) => {
   config.withCredentials = false
   const token = useAuthStore.getState().token
@@ -18,7 +15,6 @@ api.interceptors.request.use((config) => {
   return config
 })
 
-// Handle errors
 api.interceptors.response.use(
   (response) => response,
   (error) => {
@@ -27,7 +23,7 @@ api.interceptors.response.use(
       window.location.href = '/auth/login'
     }
     return Promise.reject(error)
-  }
+  },
 )
 
 export default api

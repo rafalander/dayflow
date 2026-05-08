@@ -100,9 +100,7 @@ export default function TeamDetailPage() {
       await syncMut.mutateAsync({ id: teamId, user_ids: ids })
       setMembersOpen(false)
       refetch()
-    } catch {
-      /* toast */
-    }
+    } catch {}
   }
 
   const handleSaveEdit = async (e: React.FormEvent) => {
@@ -119,9 +117,7 @@ export default function TeamDetailPage() {
       })
       setEditOpen(false)
       refetch()
-    } catch {
-      /* toast */
-    }
+    } catch {}
   }
 
   const handleDelete = async () => {
@@ -130,9 +126,7 @@ export default function TeamDetailPage() {
     try {
       await deleteMut.mutateAsync(teamId)
       navigate('/teams')
-    } catch {
-      /* toast */
-    }
+    } catch {}
   }
 
   if (!isAdmin) {

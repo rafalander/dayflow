@@ -19,24 +19,18 @@ class VacationRequestController extends Controller
         private UpcomingAbsencesService $upcomingAbsencesService,
     ) {}
 
-    /**
-     * List vacation requests
-     */
     public function index(Request $request): JsonResponse
     {
         $query = VacationRequest::with('user', 'approver');
 
-        // Filter by user
         if ($request->has('user_id')) {
             $query->where('user_id', $request->user_id);
         }
 
-        // Filter by status
         if ($request->has('status')) {
             $query->where('status', $request->status);
         }
 
-        // Filter by date range
         if ($request->has('start_date')) {
             $query->whereDate('start_date', '>=', $request->start_date);
         }
@@ -48,7 +42,6 @@ class VacationRequestController extends Controller
             $query->where('absence_type', $request->absence_type);
         }
 
-        // Get only requests that user can see
         if (!$request->user()->isAdmin()) {
             $query->where(function ($q) use ($request) {
                 $q->where('user_id', $request->user()->id)
@@ -64,9 +57,6 @@ class VacationRequestController extends Controller
         ]);
     }
 
-    /**
-     * Get single vacation request
-     */
     public function show(VacationRequest $vacation_request): JsonResponse
     {
         $vacation_request->load('user', 'approver');
@@ -77,9 +67,6 @@ class VacationRequestController extends Controller
         ]);
     }
 
-    /**
-     * Create vacation request
-     */
     public function store(Request $request): JsonResponse
     {
         $validated = $request->validate([
@@ -90,7 +77,6 @@ class VacationRequestController extends Controller
             'comments' => 'nullable|string',
         ]);
 
-        // Check for conflicts
         $conflicts = $this->vacationService->checkConflicts(
             $request->user()->id,
             $validated['start_date'],
@@ -109,7 +95,6 @@ class VacationRequestController extends Controller
         $end = Carbon::parse($validated['end_date']);
         $businessDays = VacationRequest::calculateBusinessDays($start, $end);
 
-        // Create vacation request
         $vacation = VacationRequest::create([
             'user_id' => $request->user()->id,
             'absence_type' => $validated['absence_type'],
@@ -121,7 +106,6 @@ class VacationRequestController extends Controller
             'business_days' => $businessDays,
         ]);
 
-        // Send notifications
         $this->vacationService->notifyApprover($vacation);
 
         return response()->json([
@@ -131,14 +115,10 @@ class VacationRequestController extends Controller
         ], 201);
     }
 
-    /**
-     * Update vacation request (before approval)
-     */
     public function update(Request $request, VacationRequest $vacation_request): JsonResponse
     {
         $this->authorize('update', $vacation_request);
 
-        // Can only update pending requests
         if ($vacation_request->status !== 'pending') {
             return response()->json([
                 'message' => 'Cannot update a vacation request that has been already processed',
@@ -171,9 +151,6 @@ class VacationRequestController extends Controller
         ]);
     }
 
-    /**
-     * Delete vacation request (before approval)
-     */
     public function destroy(VacationRequest $vacation_request): JsonResponse
     {
         $this->authorize('delete', $vacation_request);
@@ -193,10 +170,6 @@ class VacationRequestController extends Controller
         ]);
     }
 
-    /**
-     * Contagens de solicitações (aprovadas / pendentes / recusadas / total) para o escopo do gestor.
-     * Admin: toda a organização (utilizadores ativos). Demais: apenas subordinados diretos.
-     */
     public function teamStats(Request $request): JsonResponse
     {
         $auth = $request->user();
@@ -232,9 +205,6 @@ class VacationRequestController extends Controller
         ]);
     }
 
-    /**
-     * Próximas ausências (férias aprovadas) num horizonte configurável — visível a todos os autenticados.
-     */
     public function upcomingAbsences(Request $request): JsonResponse
     {
         $result = $this->upcomingAbsencesService->upcomingApprovedVacations();
@@ -248,10 +218,6 @@ class VacationRequestController extends Controller
         ]);
     }
 
-    /**
-     * Calendário corporativo: todas as férias aprovadas que interceptam o período [start_date, end_date].
-     * Visível para qualquer usuário autenticado (planejamento da equipe).
-     */
     public function calendar(Request $request): JsonResponse
     {
         $validated = $request->validate([
@@ -262,7 +228,6 @@ class VacationRequestController extends Controller
         $startDate = $validated['start_date'];
         $endDate = $validated['end_date'];
 
-        // Sobreposição: intervalo da solicitação [start_date, end_date] ∩ período pedido ≠ ∅
         $vacations = VacationRequest::query()
             ->where('status', 'approved')
             ->whereDate('start_date', '<=', $endDate)

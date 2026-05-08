@@ -2,43 +2,32 @@
 
 namespace App\Providers;
 
+use App\Models\Cargo;
+use App\Models\Team;
+use App\Models\User;
+use App\Models\VacationRequest;
+use App\Policies\CargoPolicy;
+use App\Policies\TeamPolicy;
+use App\Policies\UserPolicy;
+use App\Policies\VacationRequestPolicy;
 use Dedoc\Scramble\Scramble;
 use Dedoc\Scramble\Support\Generator\SecurityScheme;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
-use App\Models\VacationRequest;
-use App\Models\User;
-use App\Models\Cargo;
-use App\Models\Team;
-use App\Policies\VacationRequestPolicy;
-use App\Policies\UserPolicy;
-use App\Policies\CargoPolicy;
-use App\Policies\TeamPolicy;
 
 class AppServiceProvider extends ServiceProvider
 {
-    /**
-     * Register any application services.
-     */
-    public function register(): void
-    {
-        //
-    }
+    public function register(): void {}
 
-    /**
-     * Bootstrap any application services.
-     */
     public function boot(): void
     {
         $this->mergeGoogleOAuthFromEnvFileIfMisconfigured();
 
-        // Register policies
         Gate::policy(VacationRequest::class, VacationRequestPolicy::class);
         Gate::policy(User::class, UserPolicy::class);
         Gate::policy(Cargo::class, CargoPolicy::class);
         Gate::policy(Team::class, TeamPolicy::class);
 
-        // Configure Sanctum
         if (class_exists(\Laravel\Sanctum\Sanctum::class)) {
             \Laravel\Sanctum\Sanctum::usePersonalAccessTokenModel(\Laravel\Sanctum\PersonalAccessToken::class);
         }

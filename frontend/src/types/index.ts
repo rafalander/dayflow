@@ -23,7 +23,6 @@ export interface Team {
   updated_at: string;
 }
 
-/** Resposta de GET /teams/:id — árvore sob o gestor (manager_id dentro do time). */
 export interface HierarchyNode {
   id: number;
   name: string;
@@ -31,7 +30,6 @@ export interface HierarchyNode {
   display_avatar: string | null;
   cargo?: Cargo | null;
   is_lead: boolean;
-  /** Membro do time sem cadeia gestor→subordinado via manager_id (mostrado sob o gestor). */
   orphan_hierarchy?: boolean;
   children: HierarchyNode[];
 }
@@ -42,7 +40,6 @@ export interface TeamDetailPayload {
   member_ids: number[];
 }
 
-/** Perfil sem role/level próprios — hierarquia só via `cargo`. */
 export interface User {
   id: number;
   name: string;
@@ -63,7 +60,6 @@ export interface User {
   vacationRequests?: VacationRequest[];
 }
 
-/** Compatível com GET /roles (lista fixa para selects de cargo). */
 export interface Role {
   id: number;
   name: string;
@@ -77,7 +73,6 @@ export interface Role {
   updated_at?: string;
 }
 
-/** Paginação no formato Laravel */
 export interface LaravelPaginator<T> {
   current_page: number;
   data: T[];

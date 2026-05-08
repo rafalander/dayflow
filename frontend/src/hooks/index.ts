@@ -42,7 +42,6 @@ export const useUsers = (page = 1, search = '', enabled = true, perPage = 15) =>
   })
 }
 
-/** Lista ampla para selects (gestor), só quando `enabled`. */
 export const useUserDirectory = (enabled: boolean) => {
   return useQuery({
     queryKey: ['users', 'directory'],

@@ -130,9 +130,6 @@ class TeamController extends Controller
         ]);
     }
 
-    /**
-     * Define membros do time (team_id). O gestor (lead) é sempre incluído.
-     */
     public function syncMembers(Request $request, Team $team): JsonResponse
     {
         $this->authorize('update', $team);

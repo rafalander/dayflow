@@ -26,9 +26,16 @@ class Team extends Model
     }
 
     /**
-     * Nested tree under the team lead (manager_id links within the team).
-     *
-     * @return array<string, mixed>|null
+     * @return array{
+     *     id: int,
+     *     name: string,
+     *     email: string,
+     *     display_avatar: string|null,
+     *     cargo: mixed,
+     *     is_lead: bool,
+     *     orphan_hierarchy: bool,
+     *     children: list<array<string, mixed>>
+     * }|null
      */
     public function buildHierarchyTree(): ?array
     {

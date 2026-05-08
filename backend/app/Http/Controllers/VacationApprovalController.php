@@ -2,19 +2,16 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\VacationRequest;
 use App\Models\VacationApproval;
+use App\Models\VacationRequest;
 use App\Services\VacationService;
-use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 
 class VacationApprovalController extends Controller
 {
     public function __construct(private VacationService $vacationService) {}
 
-    /**
-     * Approve vacation request
-     */
     public function approve(Request $request, VacationRequest $vacation): JsonResponse
     {
         $this->authorize('approve', $vacation);
@@ -30,24 +27,20 @@ class VacationApprovalController extends Controller
             'comments' => 'nullable|string|max:500',
         ]);
 
-        // Create approval record
-        $approval = VacationApproval::create([
+        VacationApproval::create([
             'vacation_request_id' => $vacation->id,
             'approver_id' => $request->user()->id,
             'action' => 'approved',
             'comment' => $validated['comments'] ?? null,
         ]);
 
-        // Update vacation request
         $vacation->update([
             'status' => 'approved',
             'approver_id' => $request->user()->id,
         ]);
 
-        // Send notifications
         $this->vacationService->notifyRequester($vacation, 'approved');
 
-        // Log audit
         $this->vacationService->logAudit($request->user(), 'vacation_approved', $vacation);
 
         return response()->json([
@@ -57,9 +50,6 @@ class VacationApprovalController extends Controller
         ]);
     }
 
-    /**
-     * Reject vacation request
-     */
     public function reject(Request $request, VacationRequest $vacation): JsonResponse
     {
         $this->authorize('approve', $vacation);
@@ -75,24 +65,20 @@ class VacationApprovalController extends Controller
             'reason' => 'required|string|max:500',
         ]);
 
-        // Create approval record
-        $approval = VacationApproval::create([
+        VacationApproval::create([
             'vacation_request_id' => $vacation->id,
             'approver_id' => $request->user()->id,
             'action' => 'rejected',
             'comment' => $validated['reason'],
         ]);
 
-        // Update vacation request
         $vacation->update([
             'status' => 'rejected',
             'approver_id' => $request->user()->id,
         ]);
 
-        // Send notifications
         $this->vacationService->notifyRequester($vacation, 'rejected');
 
-        // Log audit
         $this->vacationService->logAudit($request->user(), 'vacation_rejected', $vacation);
 
         return response()->json([
@@ -102,9 +88,6 @@ class VacationApprovalController extends Controller
         ]);
     }
 
-    /**
-     * Get pending approvals for current user
-     */
     public function pending(Request $request): JsonResponse
     {
         $query = VacationRequest::query()

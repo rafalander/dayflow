@@ -4,8 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Models\Cargo;
 use App\Models\User;
-use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
@@ -13,10 +13,6 @@ use Laravel\Socialite\Facades\Socialite;
 
 class AuthController extends Controller
 {
-    /**
-     * Login local com email e senha (somente quando `DEV_PASSWORD_LOGIN=true`).
-     * Retorna token Sanctum para uso no header `Authorization: Bearer`.
-     */
     public function devLogin(Request $request): JsonResponse
     {
         abort_unless(config('dayflow.dev_password_login'), 404);
@@ -59,9 +55,6 @@ class AuthController extends Controller
         ]);
     }
 
-    /**
-     * Login do superadmin (credenciais em config/dayflow.php ou .env).
-     */
     public function superadminLogin(Request $request): JsonResponse
     {
         $validated = $request->validate([
@@ -100,9 +93,6 @@ class AuthController extends Controller
         ]);
     }
 
-    /**
-     * Redirect to Google OAuth
-     */
     public function redirectToGoogle(): \Illuminate\Http\RedirectResponse
     {
         return Socialite::driver('google')
@@ -111,26 +101,21 @@ class AuthController extends Controller
             ->redirect();
     }
 
-    /**
-     * Handle Google OAuth callback
-     */
     public function handleGoogleCallback(): \Illuminate\Http\RedirectResponse
     {
         try {
             $googleUser = Socialite::driver('google')->stateless()->user();
 
-            // Validate domain
             if (!$this->validateEmailDomain($googleUser->email)) {
                 Log::warning("Unauthorized domain login attempt: {$googleUser->email}");
                 return redirect(env('FRONTEND_URL') . '/auth/error?reason=invalid_domain');
             }
 
-            // Find or create user
             $user = User::where('google_id', $googleUser->id)->first();
 
             if (!$user) {
                 $user = User::where('email', $googleUser->email)->first();
-                
+
                 if (!$user) {
                     $cargoId = Cargo::where('slug', config('dayflow.system_cargo_slugs.default'))->value('id');
                     if (! $cargoId) {
@@ -156,16 +141,13 @@ class AuthController extends Controller
                 }
             }
 
-            // Update last login
             $user->update(['last_login_at' => now()]);
 
             $user->refresh();
             $user->load('cargo');
 
-            // Generate token
             $token = $user->createToken('api-token')->plainTextToken;
 
-            // Redirect with token
             $redirectUrl = env('FRONTEND_URL') . '/auth/callback?token=' . $token . '&user=' . urlencode(json_encode($user));
 
             return redirect($redirectUrl);
@@ -175,13 +157,10 @@ class AuthController extends Controller
         }
     }
 
-    /**
-     * Validate email domain
-     */
     private function validateEmailDomain(string $email): bool
     {
         $allowedDomains = explode(',', env('ALLOWED_EMAIL_DOMAINS', '@uello.com.br'));
-        
+
         foreach ($allowedDomains as $domain) {
             if (str_ends_with($email, trim($domain))) {
                 return true;
@@ -191,9 +170,6 @@ class AuthController extends Controller
         return false;
     }
 
-    /**
-     * Get current authenticated user
-     */
     public function me(Request $request): JsonResponse
     {
         $user = $request->user()->load('manager', 'subordinates', 'cargo');
@@ -204,9 +180,6 @@ class AuthController extends Controller
         ]);
     }
 
-    /**
-     * Logout (revoke all tokens)
-     */
     public function logout(Request $request): JsonResponse
     {
         $request->user()->tokens()->delete();

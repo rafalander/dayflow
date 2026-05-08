@@ -27,7 +27,6 @@ export const authService = {
     window.location.href = `${import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api'}/auth/redirect`
   },
 
-  /** Login local (email/senha) — só funciona com DEV_PASSWORD_LOGIN no backend. */
   devLogin: async (email: string, password: string): Promise<{ token: string; user: User }> => {
     const response = await api.post<ApiResponse<{ token: string; user: User }>>('/auth/dev-login', {
       email,

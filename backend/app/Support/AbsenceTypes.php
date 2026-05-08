@@ -5,7 +5,7 @@ namespace App\Support;
 final class AbsenceTypes
 {
     /**
-     * @return array<string, string> slug => rótulo para UI
+     * @return array<string, string>
      */
     public static function labels(): array
     {

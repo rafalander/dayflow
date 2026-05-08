@@ -56,9 +56,7 @@ export default function TeamsPage() {
         lead_id: Number(leadId),
       })
       closeModal()
-    } catch {
-      /* toast no hook */
-    }
+    } catch {}
   }
 
   if (!isAdmin) {

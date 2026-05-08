@@ -23,15 +23,11 @@ export type UserAvatarSize = keyof typeof sizeStyles
 
 interface UserAvatarProps {
   name: string
-  /** URL da foto (Google, storage, etc.). Sem URL válida → iniciais. */
   src?: string | null
   size?: UserAvatarSize
   className?: string
 }
 
-/**
- * Avatar com foto ou iniciais — não depende de arquivo estático em /public.
- */
 export default function UserAvatar({ name, src, size = 'sm', className = '' }: UserAvatarProps) {
   const [failed, setFailed] = useState(false)
   const trimmed = src?.trim() ?? ''

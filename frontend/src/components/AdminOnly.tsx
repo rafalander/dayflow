@@ -3,7 +3,6 @@ import { Loader } from 'lucide-react'
 import { useAuth } from '@/hooks'
 import { isAdminUser } from '@/lib/auth'
 
-/** Conteúdo só para utilizadores cujo cargo tem `role === 'admin'`. */
 export default function AdminOnly({ children }: { children: ReactNode }) {
   const { meQuery } = useAuth()
 

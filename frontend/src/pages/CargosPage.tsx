@@ -70,18 +70,14 @@ export default function CargosPage() {
         })
       }
       closeModal()
-    } catch {
-      /* toast no hook */
-    }
+    } catch {}
   }
 
   const handleDelete = async (c: Cargo) => {
     if (!confirm(`Remover o cargo "${c.name}"?`)) return
     try {
       await deleteMut.mutateAsync(c.id)
-    } catch {
-      /* toast */
-    }
+    } catch {}
   }
 
   return (

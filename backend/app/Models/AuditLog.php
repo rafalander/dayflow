@@ -29,7 +29,8 @@ class AuditLog extends Model
     }
 
     /**
-     * Log an action.
+     * @param array<string, mixed>|null $oldValues
+     * @param array<string, mixed>|null $newValues
      */
     public static function log(
         string $action,

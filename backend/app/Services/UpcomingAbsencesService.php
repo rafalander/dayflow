@@ -6,19 +6,10 @@ use App\Models\Setting;
 use App\Models\VacationRequest;
 use Illuminate\Support\Collection;
 
-/**
- * Próximas ausências aprovadas num horizonte configurável.
- *
- * Centraliza a regra de negócio para reutilização em HTTP, jobs (ex.: notificação Slack)
- * e outros pontos de integração.
- */
 class UpcomingAbsencesService
 {
     public const SETTING_KEY = 'dashboard_upcoming_absences_days';
 
-    /**
-     * Dias efetivos do horizonte (1–366), a partir da setting ou do default em config.
-     */
     public function resolveHorizonDays(?int $overrideDays = null): int
     {
         if ($overrideDays !== null) {

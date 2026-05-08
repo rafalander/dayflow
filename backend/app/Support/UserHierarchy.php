@@ -4,10 +4,6 @@ namespace App\Support;
 
 use App\Models\User;
 
-/**
- * Hierarquia só via cargo (positions.role / positions.level).
- * Nível maior = mais autoridade. Admins (cargo.role = admin) gerem quem tem nível inferior.
- */
 final class UserHierarchy
 {
     public static function level(User $user): int
@@ -24,7 +20,6 @@ final class UserHierarchy
         return ($user->cargo?->role ?? null) === 'admin';
     }
 
-    /** Ver/detalhes de outro utilizador (não inclui edição). */
     public static function canView(User $auth, User $target): bool
     {
         if ($auth->id === $target->id) {
@@ -38,7 +33,6 @@ final class UserHierarchy
         return self::level($auth) > self::level($target);
     }
 
-    /** Criar/editar/desativar outro utilizador. */
     public static function canManage(User $auth, User $target): bool
     {
         if ($auth->id === $target->id) {
@@ -52,7 +46,6 @@ final class UserHierarchy
         return self::level($auth) > self::level($target);
     }
 
-    /** Novo utilizador deve ficar estritamente abaixo do criador (nível do cargo). */
     public static function canAssignLevel(User $auth, int $newCargoLevel): bool
     {
         if (! self::isAdmin($auth)) {

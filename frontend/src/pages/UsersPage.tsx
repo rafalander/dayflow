@@ -117,9 +117,7 @@ export default function UsersPage() {
         }
       }
       closeModal()
-    } catch {
-      /* toast nos hooks */
-    }
+    } catch {}
   }
 
   const managerOptions = directoryUsers.filter((u) =>

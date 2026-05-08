@@ -51,9 +51,7 @@ export default function VacationsPage() {
       await createMutation.mutateAsync(payload)
       setModalOpen(false)
       setReason('')
-    } catch {
-      /* toast from mutation */
-    }
+    } catch {}
   }
 
   const statusLabel: Record<string, string> = {

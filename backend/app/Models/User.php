@@ -41,8 +41,6 @@ class User extends Authenticatable
 
     protected $appends = ['display_avatar'];
 
-    // ─── Relationships ───────────────────────────
-
     public function cargo(): BelongsTo
     {
         return $this->belongsTo(Cargo::class);
@@ -73,11 +71,6 @@ class User extends Authenticatable
         return $this->hasMany(VacationApproval::class, 'approver_id');
     }
 
-    // ─── Accessors ───────────────────────────────
-
-    /**
-     * Display avatar: prefer custom_avatar, fallback to Google avatar.
-     */
     public function getDisplayAvatarAttribute(): ?string
     {
         if ($this->custom_avatar) {
@@ -87,15 +80,11 @@ class User extends Authenticatable
         return $this->avatar;
     }
 
-    // ─── Authorization Helpers ───────────────────
-
-    /** Administrador = cargo com role "admin" na tabela positions. */
     public function isAdmin(): bool
     {
         return \App\Support\UserHierarchy::isAdmin($this);
     }
 
-    /** Resumo de solicitações no dashboard: admin ou quem tem subordinados diretos. */
     public function canViewTeamVacationStats(): bool
     {
         if ($this->isAdmin()) {
@@ -105,17 +94,11 @@ class User extends Authenticatable
         return $this->subordinates()->exists();
     }
 
-    /**
-     * Compatibilidade: permissões amplas seguem isAdmin().
-     */
     public function hasPermission(string $permission): bool
     {
         return $this->isAdmin();
     }
 
-    /**
-     * Check if this user is a manager of the given user.
-     */
     public function isManagerOf(User $user): bool
     {
         $current = $user;
@@ -133,7 +116,7 @@ class User extends Authenticatable
     }
 
     /**
-     * Get all subordinates recursively (flatten tree).
+     * @return list<int>
      */
     public function getAllSubordinateIds(): array
     {
@@ -143,6 +126,9 @@ class User extends Authenticatable
         return $ids;
     }
 
+    /**
+     * @param list<int> $ids
+     */
     private function collectSubordinateIds(array &$ids): void
     {
         foreach ($this->subordinates as $sub) {
@@ -151,9 +137,6 @@ class User extends Authenticatable
         }
     }
 
-    /**
-     * Get team members: users sharing the same manager.
-     */
     public function getTeamMembers()
     {
         if (! $this->manager_id) {
@@ -166,9 +149,6 @@ class User extends Authenticatable
             ->get();
     }
 
-    /**
-     * Scope: only active users.
-     */
     public function scopeActive($query)
     {
         return $query->where('is_active', true);

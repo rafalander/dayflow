@@ -2,19 +2,16 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\VacationRequest;
 use App\Models\User;
+use App\Models\VacationRequest;
 use App\Support\AbsenceTypes;
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class ReportController extends Controller
 {
-    /**
-     * Get vacation report
-     */
     public function vacations(Request $request): JsonResponse
     {
         $validated = $request->validate([
@@ -44,9 +41,6 @@ class ReportController extends Controller
         ]);
     }
 
-    /**
-     * Export report as CSV (útil para testes / Excel).
-     */
     public function exportExcel(Request $request): StreamedResponse|JsonResponse
     {
         $validated = $request->validate([
@@ -86,9 +80,6 @@ class ReportController extends Controller
         ]);
     }
 
-    /**
-     * Export report as PDF
-     */
     public function exportPdf(Request $request): JsonResponse
     {
         return response()->json([
@@ -97,9 +88,6 @@ class ReportController extends Controller
         ]);
     }
 
-    /**
-     * Get audit logs
-     */
     public function auditLogs(Request $request): JsonResponse
     {
         $logs = \App\Models\AuditLog::orderBy('created_at', 'desc')
@@ -112,7 +100,7 @@ class ReportController extends Controller
     }
 
     /**
-     * @param  array{start_date: string, end_date: string, manager_id?: int, team_id?: int}  $validated
+     * @param array{start_date: string, end_date: string, manager_id?: int, team_id?: int} $validated
      */
     private function approvedVacationsInRangeQuery(array $validated, Request $request): Builder
     {
@@ -139,6 +127,9 @@ class ReportController extends Controller
         return $query;
     }
 
+    /**
+     * @return list<int>
+     */
     private function getSubordinateIds(User $user): array
     {
         $ids = [$user->id];

@@ -9,11 +9,22 @@ class VacationReminderNotification extends Notification
 {
     public function __construct(private VacationRequest $vacation) {}
 
+    /**
+     * @return list<string>
+     */
     public function via($notifiable): array
     {
         return ['database', 'mail'];
     }
 
+    /**
+     * @return array{
+     *     vacation_id: int,
+     *     start_date: string,
+     *     end_date: string,
+     *     days_until: int
+     * }
+     */
     public function toArray($notifiable): array
     {
         return [

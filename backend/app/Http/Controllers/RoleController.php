@@ -4,9 +4,6 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\JsonResponse;
 
-/**
- * Compatibilidade com o frontend: apenas duas roles fixas (sem tabela `roles`).
- */
 class RoleController extends Controller
 {
     public function index(): JsonResponse

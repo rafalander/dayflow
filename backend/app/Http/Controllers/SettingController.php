@@ -4,14 +4,11 @@ namespace App\Http\Controllers;
 
 use App\Models\Setting;
 use App\Models\User;
-use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 
 class SettingController extends Controller
 {
-    /**
-     * Get all settings
-     */
     public function index(): JsonResponse
     {
         $settings = Setting::all()->keyBy('key');
@@ -22,9 +19,6 @@ class SettingController extends Controller
         ]);
     }
 
-    /**
-     * Get single setting
-     */
     public function show(string $key): JsonResponse
     {
         $setting = Setting::where('key', $key)->firstOrFail();
@@ -35,9 +29,6 @@ class SettingController extends Controller
         ]);
     }
 
-    /**
-     * Update setting
-     */
     public function update(Request $request, string $key): JsonResponse
     {
         $this->authorize('admin', User::class);
@@ -47,8 +38,6 @@ class SettingController extends Controller
             'description' => 'sometimes|string',
         ]);
 
-        // Criar o registro se ainda não existir (ex.: ambiente sem SettingSeeder — o horizonte
-        // de ausências ainda funciona via config, mas salvar na UI exige esta linha).
         $payload = ['value' => $validated['value']];
         if (array_key_exists('description', $validated)) {
             $payload['description'] = $validated['description'];

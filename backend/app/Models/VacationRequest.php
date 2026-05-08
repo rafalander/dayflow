@@ -39,8 +39,6 @@ class VacationRequest extends Model
         return AbsenceTypes::label((string) ($this->absence_type ?? 'vacation'));
     }
 
-    // ─── Relationships ───────────────────────────
-
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
@@ -55,8 +53,6 @@ class VacationRequest extends Model
     {
         return $this->hasMany(VacationApproval::class);
     }
-
-    // ─── Status Helpers ──────────────────────────
 
     public function isPending(): bool
     {
@@ -78,9 +74,6 @@ class VacationRequest extends Model
         return $this->status === 'cancelled';
     }
 
-    /**
-     * Calculate business days between start and end date.
-     */
     public static function calculateBusinessDays(\Carbon\Carbon $start, \Carbon\Carbon $end): int
     {
         $days = 0;
@@ -95,8 +88,6 @@ class VacationRequest extends Model
 
         return $days;
     }
-
-    // ─── Scopes ──────────────────────────────────
 
     public function scopePending($query)
     {
@@ -113,7 +104,7 @@ class VacationRequest extends Model
         return $query->where(function ($q) use ($startDate, $endDate) {
             $q->where('start_date', '<=', $endDate)
               ->where('end_date', '>=', $startDate);
-        })->when($excludeId, fn($q) => $q->where('id', '!=', $excludeId));
+        })->when($excludeId, fn ($q) => $q->where('id', '!=', $excludeId));
     }
 
     public function scopeForPeriod($query, $startDate, $endDate)
