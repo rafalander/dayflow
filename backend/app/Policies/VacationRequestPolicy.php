@@ -30,6 +30,10 @@ class VacationRequestPolicy
 
     public function approve(User $user, VacationRequest $vacation): bool
     {
+        if ($user->id === $vacation->user_id && UserHierarchy::isAdmin($user)) {
+            return true;
+        }
+
         if ($user->id === $vacation->approver_id) {
             return true;
         }
