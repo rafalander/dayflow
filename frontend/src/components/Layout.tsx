@@ -6,21 +6,6 @@ import { useAuthStore } from '@/store/authStore'
 import { useAuth } from '@/hooks'
 import { isAdminUser } from '@/lib/auth'
 
-function BrandWordmark({ collapsed }: { collapsed: boolean }) {
-  if (collapsed) {
-    return (
-      <div className="box-border flex aspect-square h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-[11px] font-bold leading-none text-primary">
-        DF
-      </div>
-    )
-  }
-  return (
-    <div className="min-w-0">
-      <p className="font-bold leading-tight text-primary text-lg">Dayflow</p>
-    </div>
-  )
-}
-
 export default function Layout() {
   const [sidebarOpen, setSidebarOpen] = useState(true)
   const navigate = useNavigate()
@@ -73,19 +58,10 @@ export default function Layout() {
         }`}
       >
         <div
-          className={`flex shrink-0 border-b border-gray-200 bg-white ${
-            sidebarOpen
-              ? 'h-16 flex-row items-center justify-between gap-2 px-3'
-              : 'flex-col items-center gap-2 px-2 py-3'
+          className={`flex h-16 shrink-0 items-center border-b border-gray-200 bg-white ${
+            sidebarOpen ? 'justify-end px-3' : 'justify-center px-2'
           }`}
         >
-          <div
-            className={
-              sidebarOpen ? 'flex min-w-0 flex-1 items-center overflow-hidden' : 'flex justify-center'
-            }
-          >
-            <BrandWordmark collapsed={!sidebarOpen} />
-          </div>
           <button
             type="button"
             onClick={() => setSidebarOpen(!sidebarOpen)}
@@ -96,7 +72,7 @@ export default function Layout() {
           </button>
         </div>
 
-        <nav className="space-y-2 p-4">
+        <nav className={`space-y-2 ${sidebarOpen ? 'p-4' : 'px-3 py-4'}`}>
           {menuItems.map((item) => {
             const Icon = item.icon
             return (
@@ -104,11 +80,14 @@ export default function Layout() {
                 key={item.path}
                 type="button"
                 onClick={() => navigate(item.path)}
-                className={`flex w-full items-center space-x-3 rounded px-4 py-2 transition ${
+                className={`flex w-full items-center rounded transition ${
+                  sidebarOpen ? 'justify-start gap-3 px-4 py-2' : 'justify-center px-0 py-3'
+                } ${
                   isActive(item.path, item.matchPrefix)
                     ? 'bg-primary text-white'
                     : 'text-gray-600 hover:bg-gray-100'
                 }`}
+                aria-label={item.label}
               >
                 <Icon size={20} />
                 <span className={!sidebarOpen ? 'hidden' : ''}>{item.label}</span>
@@ -121,10 +100,15 @@ export default function Layout() {
       <main className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden bg-gray-50">
         <header className="flex h-16 shrink-0 items-center border-b border-gray-200 bg-white px-6">
           <div className="flex w-full items-center justify-between">
-            <div className="min-w-0">
+            <button
+              type="button"
+              onClick={() => navigate('/dashboard')}
+              className="min-w-0 text-left transition hover:opacity-80"
+              title="Ir para a home"
+            >
               <p className="font-bold text-primary text-lg">Dayflow</p>
               <p className="text-xs text-gray-500">Gestão de Férias</p>
-            </div>
+            </button>
 
             <div className="flex items-center gap-3">
               {user && (
