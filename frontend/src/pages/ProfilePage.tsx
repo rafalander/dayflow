@@ -1,6 +1,6 @@
-import type { ReactNode } from 'react'
+import { useEffect, useState, type ReactNode } from 'react'
 import type { LucideIcon } from 'lucide-react'
-import { useAuth } from '@/hooks'
+import { useAuth, useUpdateUser } from '@/hooks'
 import { formatDateBR, formatDateTimeBR } from '@/utils/date'
 import { Loader, Mail, Briefcase, CalendarClock, CalendarDays } from 'lucide-react'
 import UserAvatar from '@/components/UserAvatar'
@@ -29,6 +29,32 @@ function InfoRow({
 
 export default function ProfilePage() {
   const { meQuery } = useAuth()
+  const updateUser = useUpdateUser()
+  const [birthDate, setBirthDate] = useState('')
+  const user = meQuery.data ?? null
+
+  useEffect(() => {
+    setBirthDate(user?.birth_date ?? '')
+  }, [user?.birth_date])
+
+  const today = new Date()
+  const maxBirthDate = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(
+    today.getDate(),
+  ).padStart(2, '0')}`
+
+  const handleBirthDateSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!user) return
+
+    try {
+      await updateUser.mutateAsync({
+        id: user.id,
+        data: {
+          birth_date: birthDate || null,
+        },
+      })
+    } catch {}
+  }
 
   if (meQuery.isPending) {
     return (
@@ -38,7 +64,6 @@ export default function ProfilePage() {
     )
   }
 
-  const user = meQuery.data
   if (!user) {
     return (
       <p className="text-center text-gray-500">Não foi possível carregar o perfil.</p>
@@ -50,6 +75,8 @@ export default function ProfilePage() {
   const memberSince = user.created_at ? formatDateBR(user.created_at) : '—'
 
   const lastLogin = user.last_login_at ? formatDateTimeBR(user.last_login_at) : 'Nunca registrado'
+  const birthday = user.birth_date ? formatDateBR(user.birth_date) : 'Não informado'
+  const birthDateChanged = birthDate !== (user.birth_date ?? '')
 
   return (
     <div className="mx-auto max-w-3xl space-y-8">
@@ -103,9 +130,46 @@ export default function ProfilePage() {
 
         <div className="mt-4 border-t border-gray-100 pt-2">
           <InfoRow icon={Briefcase} label="Cargo" value={cargoName} />
+          <InfoRow icon={CalendarDays} label="Aniversário" value={birthday} />
           <InfoRow icon={CalendarDays} label="Membro desde" value={memberSince} />
           <InfoRow icon={CalendarClock} label="Último acesso" value={lastLogin} />
         </div>
+
+        <form onSubmit={handleBirthDateSubmit} className="mt-6 border-t border-gray-100 pt-6">
+          <div className="mb-4">
+            <h3 className="text-base font-semibold text-gray-900">Atualizar aniversário</h3>
+            <p className="mt-1 text-sm text-gray-500">
+              Seu aniversário aparece no dashboard para o mês corrente quando esta data estiver preenchida.
+            </p>
+          </div>
+
+          <div>
+            <label htmlFor="birth-date" className="block text-sm font-medium text-gray-700">
+              Data de nascimento
+            </label>
+            <input
+              id="birth-date"
+              type="date"
+              max={maxBirthDate}
+              value={birthDate}
+              onChange={(e) => setBirthDate(e.target.value)}
+              className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+            />
+          </div>
+
+          <div className="mt-4 flex items-center justify-between gap-3">
+            <p className="text-xs text-gray-500">
+              Deixe em branco se você não quiser informar essa data agora.
+            </p>
+            <button
+              type="submit"
+              disabled={updateUser.isPending || !birthDateChanged}
+              className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white shadow-sm transition hover:opacity-95 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              {updateUser.isPending ? 'Salvando...' : 'Salvar aniversário'}
+            </button>
+          </div>
+        </form>
       </section>
     </div>
   )

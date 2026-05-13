@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import toast from 'react-hot-toast'
 import { useAbsenceTypes, useVacationRequests, useCreateVacation } from '@/hooks'
@@ -26,6 +26,18 @@ export default function VacationsPage() {
   const [endDate, setEndDate] = useState(() => addDays(today, 14))
   const [absenceType, setAbsenceType] = useState('vacation')
   const [reason, setReason] = useState('')
+  const isSingleDayAbsence = absenceType === 'day_off'
+
+  useEffect(() => {
+    if (isSingleDayAbsence) {
+      setEndDate(startDate)
+      return
+    }
+
+    if (endDate < startDate) {
+      setEndDate(startDate)
+    }
+  }, [endDate, isSingleDayAbsence, startDate])
 
   const deleteMutation = useMutation({
     mutationFn: (id: number) => vacationService.delete(id),
@@ -44,7 +56,7 @@ export default function VacationsPage() {
     try {
       const payload: { start_date: string; end_date: string; absence_type: string; reason?: string } = {
         start_date: startDate,
-        end_date: endDate,
+        end_date: isSingleDayAbsence ? startDate : endDate,
         absence_type: absenceType,
       }
       const r = reason.trim()
@@ -158,7 +170,7 @@ export default function VacationsPage() {
               </div>
               <div>
                 <label htmlFor="vs" className="block text-xs font-medium text-gray-600">
-                  Data início
+                  {isSingleDayAbsence ? 'Data' : 'Data início'}
                 </label>
                 <input
                   id="vs"
@@ -170,20 +182,22 @@ export default function VacationsPage() {
                   className="mt-1 w-full rounded border border-gray-300 px-3 py-2 text-sm"
                 />
               </div>
-              <div>
-                <label htmlFor="ve" className="block text-xs font-medium text-gray-600">
-                  Data fim
-                </label>
-                <input
-                  id="ve"
-                  type="date"
-                  required
-                  min={startDate}
-                  value={endDate}
-                  onChange={(e) => setEndDate(e.target.value)}
-                  className="mt-1 w-full rounded border border-gray-300 px-3 py-2 text-sm"
-                />
-              </div>
+              {!isSingleDayAbsence && (
+                <div>
+                  <label htmlFor="ve" className="block text-xs font-medium text-gray-600">
+                    Data fim
+                  </label>
+                  <input
+                    id="ve"
+                    type="date"
+                    required
+                    min={startDate}
+                    value={endDate}
+                    onChange={(e) => setEndDate(e.target.value)}
+                    className="mt-1 w-full rounded border border-gray-300 px-3 py-2 text-sm"
+                  />
+                </div>
+              )}
               <div>
                 <label htmlFor="vr" className="block text-xs font-medium text-gray-600">
                   Motivo (opcional)

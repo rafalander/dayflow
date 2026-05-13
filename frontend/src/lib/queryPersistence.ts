@@ -19,6 +19,9 @@ export function shouldDehydrateQuery(query: Query): boolean {
     const sub = k[1]
     return sub === 'team-stats' || sub === 'upcoming-absences'
   }
+  if (root === 'dashboard') {
+    return k[1] === 'monthly-overview'
+  }
   if (root === 'teams') {
     return k.length === 1 || typeof k[1] === 'number'
   }

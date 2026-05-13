@@ -140,6 +140,8 @@ return [
 
         'team_stats' => (int) env('DAYFLOW_CACHE_TEAM_STATS', 120),
 
+        'dashboard_overview' => (int) env('DAYFLOW_CACHE_DASHBOARD_OVERVIEW', 180),
+
         'upcoming_absences' => (int) env('DAYFLOW_CACHE_UPCOMING_ABSENCES', 180),
 
         'users_directory' => (int) env('DAYFLOW_CACHE_USERS_DIRECTORY', 240),

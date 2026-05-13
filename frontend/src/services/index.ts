@@ -11,6 +11,7 @@ import {
   TeamDetailPayload,
   Setting,
   AbsenceTypeOption,
+  DashboardMonthlyOverview,
 } from '@/types'
 
 export const authService = {
@@ -44,6 +45,13 @@ export const authService = {
   },
 }
 
+export const dashboardService = {
+  getMonthlyOverview: async (): Promise<DashboardMonthlyOverview> => {
+    const response = await api.get<ApiResponse<DashboardMonthlyOverview>>('/dashboard/monthly-overview')
+    return response.data.data
+  },
+}
+
 export const userService = {
   getAll: async (page = 1, search = '', perPage = 15) => {
     const response = await api.get<ApiResponse<any>>('/users', {
@@ -71,7 +79,9 @@ export const userService = {
 
   update: async (
     id: number,
-    data: Partial<Pick<User, 'name' | 'email' | 'cargo_id' | 'manager_id' | 'is_active'> & { password?: string }>,
+    data: Partial<
+      Pick<User, 'name' | 'email' | 'cargo_id' | 'manager_id' | 'is_active' | 'birth_date'> & { password?: string }
+    >,
   ) => {
     const response = await api.put<ApiResponse<User>>(`/users/${id}`, data)
     return response.data.data

@@ -25,6 +25,7 @@ class User extends Authenticatable
         'team_id',
         'is_active',
         'last_login_at',
+        'birth_date',
     ];
 
     protected $hidden = [
@@ -36,6 +37,7 @@ class User extends Authenticatable
     protected $casts = [
         'is_active' => 'boolean',
         'last_login_at' => 'datetime',
+        'birth_date' => 'date:Y-m-d',
         'password' => 'hashed',
     ];
 

@@ -11,6 +11,7 @@ use App\Http\Controllers\SettingController;
 use App\Http\Controllers\CargoController;
 use App\Http\Controllers\TeamController;
 use App\Http\Controllers\AbsenceTypeController;
+use App\Http\Controllers\DashboardController;
 
 // Public routes
 Route::post('/auth/dev-login', [AuthController::class, 'devLogin'])->name('auth.dev-login');
@@ -23,6 +24,7 @@ Route::middleware('auth:sanctum')->group(function () {
     // Auth
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::get('/me', [AuthController::class, 'me']);
+    Route::get('/dashboard/monthly-overview', [DashboardController::class, 'monthlyOverview']);
 
     Route::get('absence-types', [AbsenceTypeController::class, 'index']);
 

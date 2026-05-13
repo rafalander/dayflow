@@ -2,6 +2,7 @@ import axios from 'axios'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import {
   authService,
+  dashboardService,
   userService,
   vacationService,
   reportService,
@@ -33,6 +34,14 @@ export const useAuth = () => {
   })
 
   return { meQuery, logoutMutation }
+}
+
+export const useDashboardMonthlyOverview = () => {
+  return useQuery({
+    queryKey: ['dashboard', 'monthly-overview'],
+    queryFn: dashboardService.getMonthlyOverview,
+    staleTime: 2 * 60 * 1000,
+  })
 }
 
 export const useUsers = (page = 1, search = '', enabled = true, perPage = 15) => {
@@ -123,6 +132,7 @@ export const useUpdateUser = () => {
       queryClient.invalidateQueries({ queryKey: ['users'] })
       queryClient.invalidateQueries({ queryKey: ['users', id] })
       queryClient.invalidateQueries({ queryKey: ['users', 'directory'] })
+      queryClient.invalidateQueries({ queryKey: ['dashboard', 'monthly-overview'] })
       const me = queryClient.getQueryData<User>(['auth', 'me'])
       if (me?.id === id) {
         queryClient.invalidateQueries({ queryKey: ['auth', 'me'] })

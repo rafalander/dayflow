@@ -30,6 +30,7 @@ class UserController extends Controller
             'cargo_id' => 'required|exists:positions,id',
             'manager_id' => 'nullable|exists:users,id',
             'is_active' => 'sometimes|boolean',
+            'birth_date' => 'sometimes|nullable|date|before_or_equal:today',
         ]);
 
         $cargo = Cargo::findOrFail($validated['cargo_id']);
@@ -54,6 +55,7 @@ class UserController extends Controller
             'cargo_id' => $cargo->id,
             'manager_id' => $validated['manager_id'] ?? null,
             'is_active' => $validated['is_active'] ?? true,
+            'birth_date' => $validated['birth_date'] ?? null,
         ]);
 
         $user->load('manager', 'cargo');
@@ -66,6 +68,7 @@ class UserController extends Controller
             [
                 'email' => $user->email,
                 'cargo_id' => $user->cargo_id,
+                'birth_date' => $user->birth_date,
             ]
         );
 
@@ -185,6 +188,7 @@ class UserController extends Controller
             'manager_id' => 'sometimes|nullable|exists:users,id|different:id',
             'is_active' => 'sometimes|boolean',
             'custom_avatar' => 'sometimes|nullable|url',
+            'birth_date' => 'sometimes|nullable|date|before_or_equal:today',
         ]);
 
         if ($auth->id === $user->id) {
@@ -212,13 +216,13 @@ class UserController extends Controller
             }
         }
 
-        $before = $user->only(['name', 'email', 'is_active', 'cargo_id', 'manager_id']);
+        $before = $user->only(['name', 'email', 'is_active', 'cargo_id', 'manager_id', 'birth_date']);
 
         $user->update($validated);
         $user->load('manager', 'cargo');
 
         AuditLog::log('user_updated', User::class, $user->id, $before, $user->only([
-            'name', 'email', 'is_active', 'cargo_id', 'manager_id',
+            'name', 'email', 'is_active', 'cargo_id', 'manager_id', 'birth_date',
         ]));
 
         ApiQueryCacheGens::bumpUserDirectory();

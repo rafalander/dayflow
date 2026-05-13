@@ -52,6 +52,7 @@ export interface User {
   team_id: number | null;
   is_active: boolean;
   last_login_at: string | null;
+  birth_date: string | null;
   created_at: string;
   updated_at: string;
   cargo?: Cargo;
@@ -59,6 +60,19 @@ export interface User {
   subordinates?: User[];
   subordinates_count?: number;
   vacationRequests?: VacationRequest[];
+}
+
+export interface DashboardBirthday {
+  id: number;
+  name: string;
+  birth_date: string;
+  day: number;
+}
+
+export interface DashboardMonthlyOverview {
+  month: string;
+  birthdays: DashboardBirthday[];
+  possible_absences_count: number;
 }
 
 export interface Role {
