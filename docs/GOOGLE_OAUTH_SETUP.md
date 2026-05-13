@@ -41,7 +41,7 @@ Este guia detalha como configurar Google OAuth para o Dayflow.
 **JavaScript authorized origins:**
 ```
 http://localhost:8000
-http://localhost:3000
+http://localhost:5173
 http://localhost
 ```
 
@@ -75,7 +75,7 @@ ALLOWED_EMAIL_DOMAINS=@uello.com.br
 docker-compose restart backend
 ```
 
-2. Acesse http://localhost:3000
+2. Acesse http://localhost:5173
 3. Clique em "Entrar com Google"
 4. Faça login com sua conta @uello.com.br
 5. Você deve ser redirecionado para o dashboard

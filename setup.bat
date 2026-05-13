@@ -49,7 +49,7 @@ echo.
 echo ✅ Dayflow iniciado com sucesso!
 echo.
 echo 📍 URLs de acesso:
-echo   • Frontend:   http://localhost:3000
+echo   • Frontend:   http://localhost:5173
 echo   • Backend:    http://localhost:8000
 echo   • Mailpit:    http://localhost:8025
 echo.

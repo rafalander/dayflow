@@ -74,7 +74,7 @@ docker-compose up -d
 Isso iniciará:
 - MySQL (porta 3306)
 - Backend Laravel (porta 8000)
-- Frontend React (porta 3000)
+- Frontend React (porta 5173)
 - Redis (porta 6379)
 - Mailpit (porta 8025)
 
@@ -91,7 +91,7 @@ Isso criará:
 
 ### 5. Acesse a aplicação
 
-- **Frontend**: http://localhost:3000
+- **Frontend**: http://localhost:5173
 - **Backend API**: http://localhost:8000/api
 - **Mailpit (Emails)**: http://localhost:8025
 - **Redis**: localhost:6379
@@ -107,7 +107,7 @@ Isso criará:
 5. Adicione URLs autorizadas:
    - `http://localhost:8000`
    - `http://localhost:8000/auth/callback`
-   - `http://localhost:3000`
+   - `http://localhost:5173`
 
 6. Copie o Client ID e Client Secret
 7. Configure no `.env`:
