@@ -12,8 +12,17 @@ import {
   settingService,
   absenceTypeService,
 } from '@/services'
-import type { User } from '@/types'
+import type { Cargo, User } from '@/types'
 import toast from 'react-hot-toast'
+
+function normalizeCargoList(payload: unknown): Cargo[] {
+  if (Array.isArray(payload)) return payload as Cargo[]
+  if (payload && typeof payload === 'object') {
+    const nested = (payload as { data?: unknown }).data
+    if (Array.isArray(nested)) return nested as Cargo[]
+  }
+  return []
+}
 
 export const useAuth = () => {
   const queryClient = useQueryClient()
@@ -75,6 +84,7 @@ export const useCargos = (enabled = true) => {
     queryFn: cargoService.getAll,
     enabled,
     staleTime: 5 * 60 * 1000,
+    select: normalizeCargoList,
   })
 }
 
