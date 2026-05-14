@@ -36,7 +36,7 @@ export default function LoginPage() {
       <button
         type="button"
         onClick={() => navigate('/auth/login/admin')}
-        className="absolute right-4 top-4 rounded px-2 py-1 text-xs text-gray-500/90 transition hover:bg-white/10 hover:text-gray-700"
+        className="absolute right-4 top-4 rounded-full border border-white/40 bg-white/80 px-3 py-1.5 text-xs font-medium text-slate-700 shadow-sm backdrop-blur-sm transition hover:bg-white/90 hover:text-slate-900"
       >
         Administrador
       </button>
