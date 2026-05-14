@@ -12,7 +12,7 @@ Plataforma moderna e escalável para gerenciamento de férias corporativas com i
 - ✅ **Notificações** - Email automáticas + Slack (preparado)
 - ✅ **Logs de Auditoria** - Rastreamento de todas as ações
 - ✅ **Calendário de Férias** - Visualização de equipes ausentes
-- ✅ **API RESTful** - Bem documentada e escalável
+- ✅ **API RESTful** - Documentação OpenAPI gerada com Scramble (`/docs/api`)
 
 ## 🧩 Stack Tecnológico
 
@@ -93,6 +93,7 @@ Isso criará:
 
 - **Frontend**: http://localhost:5173
 - **Backend API**: http://localhost:8000/api
+- **Documentação da API (Scramble)**: http://localhost:8000/docs/api (OpenAPI: `/docs/api.json`)
 - **Mailpit (Emails)**: http://localhost:8025
 - **Redis**: localhost:6379
 
@@ -206,40 +207,6 @@ docker-compose down
 docker-compose down -v
 ```
 
-## 📊 API Endpoints
-
-### Autenticação
-- `GET /api/auth/redirect` - Redirecionar para Google OAuth
-- `GET /api/auth/callback` - Callback do Google
-- `GET /api/me` - Obter usuário atual
-- `POST /api/logout` - Logout
-
-### Usuários
-- `GET /api/users` - Listar usuários
-- `GET /api/users/{id}` - Obter usuário
-- `PUT /api/users/{id}` - Atualizar usuário
-- `GET /api/organization/tree` - Árvore organizacional
-- `GET /api/users/{id}/subordinates` - Subordinados
-
-### Férias
-- `GET /api/vacation-requests` - Listar solicitações
-- `POST /api/vacation-requests` - Criar solicitação
-- `GET /api/vacation-requests/{id}` - Obter solicitação
-- `PUT /api/vacation-requests/{id}` - Atualizar solicitação
-- `DELETE /api/vacation-requests/{id}` - Deletar solicitação
-- `GET /api/vacation-requests/calendar` - Calendário de férias
-
-### Aprovações
-- `GET /api/approvals/pending` - Aprovações pendentes
-- `POST /api/vacation-requests/{id}/approve` - Aprovar
-- `POST /api/vacation-requests/{id}/reject` - Rejeitar
-
-### Relatórios
-- `GET /api/reports/vacations` - Relatório de férias
-- `GET /api/reports/export-pdf` - Exportar PDF
-- `GET /api/reports/export-excel` - Exportar Excel
-- `GET /api/reports/audit-logs` - Logs de auditoria
-
 ## 🔒 Segurança
 
 - ✅ Validação de domínio email (@uello.com.br)
@@ -260,6 +227,9 @@ docker-compose down -v
 APP_NAME=Dayflow
 APP_ENV=local
 APP_DEBUG=true
+
+# Documentação API (Scramble) em ambientes não-local
+SCRAMBLE_DOCS_ENABLED=false
 
 # Database
 DB_CONNECTION=mysql
@@ -300,7 +270,7 @@ docker-compose exec frontend npm test
 
 ## 📚 Documentação
 
-- API Documentation: `/api/docs` (preparado)
+- **API (Scramble)**: UI em `/docs/api`, especificação OpenAPI em `/docs/api.json` (servidor base + prefixo `/api` conforme `APP_URL`). Em `APP_ENV=local` o acesso às docs é liberado; em outros ambientes defina `SCRAMBLE_DOCS_ENABLED=true` no `.env` do backend para equipe interna.
 - Postman Collection: [Link](./docs/Dayflow.postman_collection.json)
 - Architecture: [Link](./docs/ARCHITECTURE.md)
 

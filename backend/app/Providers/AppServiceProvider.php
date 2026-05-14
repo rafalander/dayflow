@@ -11,9 +11,15 @@ use App\Policies\TeamPolicy;
 use App\Policies\UserPolicy;
 use App\Policies\VacationRequestPolicy;
 use Dedoc\Scramble\Scramble;
+use Dedoc\Scramble\Support\Generator\OpenApi;
 use Dedoc\Scramble\Support\Generator\SecurityScheme;
+use Dotenv\Dotenv;
+use Illuminate\Routing\Route;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
+use Illuminate\Support\Str;
+use Laravel\Sanctum\PersonalAccessToken;
+use Laravel\Sanctum\Sanctum;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -28,11 +34,27 @@ class AppServiceProvider extends ServiceProvider
         Gate::policy(Cargo::class, CargoPolicy::class);
         Gate::policy(Team::class, TeamPolicy::class);
 
-        if (class_exists(\Laravel\Sanctum\Sanctum::class)) {
-            \Laravel\Sanctum\Sanctum::usePersonalAccessTokenModel(\Laravel\Sanctum\PersonalAccessToken::class);
+        Gate::define('viewApiDocs', fn (): bool => (bool) config('scramble.docs_enabled', false));
+
+        Scramble::configure()->routes(function (Route $route) {
+            $prefix = config('scramble.api_path', 'api');
+            $expectedDomain = config('scramble.api_domain');
+            $matchesBase = ! $prefix || Str::startsWith($route->uri, $prefix);
+            $domainOk = ! $expectedDomain || $route->getDomain() === $expectedDomain;
+
+            if (! $matchesBase || ! $domainOk) {
+                return false;
+            }
+
+            // Exclui o fallback JSON do api.php (não é operação real da API).
+            return ! Str::contains($route->uri, '{fallbackPlaceholder}');
+        });
+
+        if (class_exists(Sanctum::class)) {
+            Sanctum::usePersonalAccessTokenModel(PersonalAccessToken::class);
         }
 
-        Scramble::afterOpenApiGenerated(function (\Dedoc\Scramble\Support\Generator\OpenApi $openApi): void {
+        Scramble::afterOpenApiGenerated(function (OpenApi $openApi): void {
             $openApi->components->addSecurityScheme(
                 'sanctum',
                 SecurityScheme::http('bearer')->setDescription('Laravel Sanctum personal access token (Authorization: Bearer)')
@@ -57,7 +79,7 @@ class AppServiceProvider extends ServiceProvider
         }
 
         try {
-            $parsed = \Dotenv\Dotenv::parse((string) file_get_contents($path));
+            $parsed = Dotenv::parse((string) file_get_contents($path));
         } catch (\Throwable) {
             return;
         }

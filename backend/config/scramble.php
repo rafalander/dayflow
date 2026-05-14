@@ -4,6 +4,12 @@ use Dedoc\Scramble\Http\Middleware\RestrictedDocsAccess;
 
 return [
     /*
+     * Allow viewing Scramble docs when APP_ENV is not "local" (RestrictedDocsAccess + Gate::viewApiDocs).
+     * Keep false in production unless you intentionally expose docs internally.
+     */
+    'docs_enabled' => env('SCRAMBLE_DOCS_ENABLED', false),
+
+    /*
      * Your API path. By default, all routes starting with this path will be added to the docs.
      * If you need to change this behavior, you can add your custom routes resolver using `Scramble::routes()`.
      */
@@ -29,7 +35,7 @@ return [
         /*
          * Description rendered on the home page of the API documentation (`/docs/api`).
          */
-        'description' => 'Dayflow — API REST do sistema de gestão de férias. Rotas protegidas usam Bearer token (Sanctum). Obtenha um token via `/api/auth/dev-login` (somente com DEV_PASSWORD_LOGIN) ou fluxo Google OAuth.',
+        'description' => 'Dayflow — API REST do sistema de gestão de férias. Rotas protegidas usam Bearer token (Sanctum). Obtenha um token via `/api/auth/dev-login` (somente com DEV_PASSWORD_LOGIN habilitado) ou fluxo Google OAuth. Documentação gerada automaticamente; rotas utilitárias (ex.: fallback JSON) são omitidas.',
     ],
 
     /*
