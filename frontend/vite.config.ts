@@ -18,11 +18,19 @@ export default defineConfig({
   server: {
     host: true,
     port: 5173,
+
+    allowedHosts: [
+      '.ngrok-free.app',
+    ],
+
     // Windows + Docker: inotify do bind mount quase não dispara; polling faz o HMR refletir alterações
     watch: {
-      usePolling: process.env.CHOKIDAR_USEPOLLING === 'true' || process.env.WATCHPACK_POLLING === 'true',
+      usePolling:
+        process.env.CHOKIDAR_USEPOLLING === 'true' ||
+        process.env.WATCHPACK_POLLING === 'true',
       interval: 300,
     },
+
     proxy: {
       '/api': {
         target: 'http://nginx',
