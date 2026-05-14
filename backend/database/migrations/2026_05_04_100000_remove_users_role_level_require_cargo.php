@@ -18,7 +18,6 @@ return new class extends Migration
         $defs = [
             ['name' => 'Super Admin', 'slug' => 'dayflow-sys-superadmin', 'description' => 'Cargo de sistema — topo da hierarquia', 'role' => 'admin', 'level' => 1000],
             ['name' => 'Colaborador', 'slug' => 'dayflow-sys-colaborador', 'description' => 'Cargo de sistema — utilizador padrão', 'role' => 'user', 'level' => 20],
-            ['name' => 'Dev local', 'slug' => 'dayflow-sys-dev-admin', 'description' => 'Cargo de sistema — admin de desenvolvimento', 'role' => 'admin', 'level' => 500],
         ];
 
         foreach ($defs as $row) {
