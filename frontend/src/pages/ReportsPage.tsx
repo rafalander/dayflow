@@ -18,6 +18,7 @@ export default function ReportsPage() {
   const { start: ds, end: de } = useMemo(() => defaultRange(), [])
   const [startDate, setStartDate] = useState(ds)
   const [endDate, setEndDate] = useState(de)
+  const isPdfExportEnabled = false
 
   const reportQuery = useQuery({
     queryKey: ['reports', 'vacations', startDate, endDate],
@@ -114,7 +115,11 @@ export default function ReportsPage() {
           <button
             type="button"
             onClick={handlePdf}
-            className="rounded-lg bg-blue-600 px-4 py-2 font-semibold text-white hover:bg-blue-700"
+            disabled={!isPdfExportEnabled}
+            title={!isPdfExportEnabled ? 'Exportacao em PDF temporariamente indisponivel' : undefined}
+            className={`rounded-lg px-4 py-2 font-semibold transition disabled:cursor-not-allowed disabled:opacity-70 ${
+              isPdfExportEnabled ? 'bg-blue-600 text-white hover:bg-blue-700' : 'bg-slate-300 text-slate-500'
+            }`}
           >
             PDF
           </button>
