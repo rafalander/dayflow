@@ -72,9 +72,7 @@ return [
 
         'superadmin' => env('DAYFLOW_CARGO_SUPERADMIN_SLUG', 'dayflow-sys-superadmin'),
 
-        'default' => env('DAYFLOW_CARGO_DEFAULT_SLUG', 'dayflow-sys-colaborador'),
-
-        'dev_admin' => env('DAYFLOW_CARGO_DEV_ADMIN_SLUG', 'dayflow-sys-dev-admin'),
+        'default' => env('DAYFLOW_CARGO_DEFAULT_SLUG', 'dayflow-sys-colaborador')
 
     ],
 

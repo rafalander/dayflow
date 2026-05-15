@@ -5,11 +5,10 @@ use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
-return new class extends Migration
-{
+return new class extends Migration {
     public function up(): void
     {
-        if (! Schema::hasTable('positions') || ! Schema::hasTable('users')) {
+        if (!Schema::hasTable('positions') || !Schema::hasTable('users')) {
             return;
         }
 
@@ -17,7 +16,7 @@ return new class extends Migration
 
         $defs = [
             ['name' => 'Super Admin', 'slug' => 'dayflow-sys-superadmin', 'description' => 'Cargo de sistema — topo da hierarquia', 'role' => 'admin', 'level' => 1000],
-            ['name' => 'Colaborador', 'slug' => 'dayflow-sys-colaborador', 'description' => 'Cargo de sistema — utilizador padrão', 'role' => 'user', 'level' => 20],
+            ['name' => 'Colaborador', 'slug' => 'dayflow-sys-colaborador', 'description' => 'Cargo de sistema — utilizador padrão', 'role' => 'user', 'level' => 1],
         ];
 
         foreach ($defs as $row) {
@@ -29,7 +28,7 @@ return new class extends Migration
 
         $ids = DB::table('positions')->whereIn('slug', array_column($defs, 'slug'))->pluck('id', 'slug');
 
-        if (! Schema::hasColumn('users', 'role')) {
+        if (!Schema::hasColumn('users', 'role')) {
             return;
         }
 
