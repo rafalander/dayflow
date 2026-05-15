@@ -34,7 +34,7 @@ class AppServiceProvider extends ServiceProvider
         Gate::policy(Cargo::class, CargoPolicy::class);
         Gate::policy(Team::class, TeamPolicy::class);
 
-        Gate::define('viewApiDocs', fn (): bool => (bool) config('scramble.docs_enabled', false));
+        Gate::define('viewApiDocs', fn ($user = null) => in_array(app()->environment(), ['local', 'testing']) || (bool) config('scramble.docs_enabled', false));
 
         Scramble::configure()->routes(function (Route $route) {
             $prefix = config('scramble.api_path', 'api');
@@ -55,8 +55,7 @@ class AppServiceProvider extends ServiceProvider
         }
 
         Scramble::afterOpenApiGenerated(function (OpenApi $openApi): void {
-            $openApi->components->addSecurityScheme(
-                'sanctum',
+            $openApi->secure(
                 SecurityScheme::http('bearer')->setDescription('Laravel Sanctum personal access token (Authorization: Bearer)')
             );
         });

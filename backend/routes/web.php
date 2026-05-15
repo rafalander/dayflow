@@ -10,4 +10,4 @@ Route::get('/', function () {
 // Catch-all for SPA routing (if needed)
 Route::get('/{any}', function () {
     return view('app');
-})->where('any', '.*');
+})->where('any', '^(?!api|docs).*$');
