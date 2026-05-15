@@ -21,7 +21,8 @@ class VacationRequestController extends Controller
     public function __construct(
         private VacationService $vacationService,
         private UpcomingAbsencesService $upcomingAbsencesService,
-    ) {}
+    ) {
+    }
 
     public function index(Request $request): JsonResponse
     {
@@ -49,7 +50,7 @@ class VacationRequestController extends Controller
         if (!$request->user()->isAdmin()) {
             $query->where(function ($q) use ($request) {
                 $q->where('user_id', $request->user()->id)
-                  ->orWhere('approver_id', $request->user()->id);
+                    ->orWhere('approver_id', $request->user()->id);
             });
         }
 
@@ -184,7 +185,7 @@ class VacationRequestController extends Controller
     {
         $auth = $request->user();
 
-        if (! $auth->canViewTeamVacationStats()) {
+        if (!$auth->canViewTeamVacationStats()) {
             return response()->json([
                 'message' => 'Acesso negado.',
                 'status' => 'error',
@@ -264,10 +265,10 @@ class VacationRequestController extends Controller
         $approved = Cache::remember(
             $cacheKey,
             $ttl,
-            fn () => $this->approvedVacationsOverlapping($startDate, $endDate)
+            fn() => $this->approvedVacationsOverlapping($startDate, $endDate)
         );
 
-        if (! $approved instanceof Collection) {
+        if (!$approved instanceof Collection) {
             Log::warning('Vacation calendar cache entry was not a Collection; rebuilding.', [
                 'key' => $cacheKey,
                 'type' => is_object($approved) ? $approved::class : gettype($approved),
@@ -296,6 +297,19 @@ class VacationRequestController extends Controller
             'data' => $vacations,
             'status' => 'success',
         ]);
+    }
+
+    public function absencesForTheCurrentMonth()
+    {
+        $today = Carbon::today();
+        return VacationRequest::query()
+            ->where('status', 'approved')
+            ->whereDate('start_date', '<=', Carbon::now()->endOfMonth())
+            ->whereDate('end_date', '>=', Carbon::now()->startOfMonth())
+            ->whereDate('end_date', '>=', $today)
+            ->with(['user:id,name,email'])
+            ->orderBy('start_date')
+            ->get();
     }
 
     /**

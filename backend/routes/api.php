@@ -37,6 +37,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('vacation-requests/calendar', [VacationRequestController::class, 'calendar']);
     Route::get('vacation-requests/team-stats', [VacationRequestController::class, 'teamStats']);
     Route::get('vacation-requests/upcoming-absences', [VacationRequestController::class, 'upcomingAbsences']);
+    Route::get('vacation-requests/absences-for-the-current-month', [VacationRequestController::class, 'absencesForTheCurrentMonth']);
     Route::apiResource('vacation-requests', VacationRequestController::class);
 
     // Vacation Approvals
